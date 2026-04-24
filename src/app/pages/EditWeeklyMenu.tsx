@@ -292,17 +292,25 @@ export function EditWeeklyMenu() {
   const [searchParams] = useSearchParams();
   const menuId = searchParams.get("id");
 
-  const [formData, setFormData] = useState<Partial<MenuSemanal>>({});
-
-  useEffect(() => {
-    // En producción, esto cargaría el menú desde el backend usando el menuId
-    if (menuId) {
-      const menu = mockMenus.find(m => m.id === parseInt(menuId));
-      if (menu) {
-        setFormData(menu);
+  const [formData, setFormData] = useState<Partial<MenuSemanal>>(() => {
+    if (!menuId) return {};
+    const id = parseInt(menuId);
+    try {
+      const stored = localStorage.getItem("wasteless_menus");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const found = parsed.find((m: { id: number }) => m.id === id);
+        if (found) {
+          return {
+            ...found,
+            fechaInicio: found.fechaInicio ? new Date(found.fechaInicio) : undefined,
+            fechaFin:    found.fechaFin    ? new Date(found.fechaFin)    : undefined,
+          };
+        }
       }
-    }
-  }, [menuId]);
+    } catch { /* ignorar */ }
+    return mockMenus.find(m => m.id === id) ?? {};
+  });
 
   const handleToggleDish = (dia: typeof diasSemana[number], comida: typeof tiposComida[number], dishId: number) => {
     setFormData((prev) => {

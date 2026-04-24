@@ -142,7 +142,6 @@ const navItems: NavItem[] = [
     icon: <UsersIcon />,
     children: [
       { path: "/usuarios/gestion", label: "Gestión de usuarios", icon: <></> },
-      { path: "/usuarios/acceso",  label: "Gestión de acceso",   icon: <></> },
     ],
   },
   {
@@ -165,8 +164,8 @@ const navItems: NavItem[] = [
     label: "Gestión de Producción",
     icon: <ProductionIcon />,
     children: [
-      { path: "/produccion/pedidos", label: "Gestión de pedidos",              icon: <></> },
-      { path: "/produccion/ordenes", label: "Gestión de orden de producción",  icon: <></> },
+      { path: "/produccion/pedidos", label: "Gestión de pedidos",             icon: <></> },
+      { path: "/produccion/ordenes", label: "Gestión de orden de producción", icon: <></> },
     ],
   },
   {

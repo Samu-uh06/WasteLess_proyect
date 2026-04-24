@@ -18,16 +18,25 @@ interface Props {
 }
 
 export function ProtectedRoute({ allowedRoles }: Props) {
-  const { user, isAuthenticated } = useAuth();
+  const { user: ctxUser, isAuthenticated } = useAuth();
   const location = useLocation();
 
+  // Fallback: leer directamente de sessionStorage para el ciclo de render
+  // inmediatamente posterior al login(), antes de que el estado de React
+  // se propague. Sin esto, ProtectedRoute ve isAuthenticated=false y
+  // redirige al login en el mismo tick en que navigate() fue llamado.
+  const user = ctxUser ?? (() => {
+    const stored = sessionStorage.getItem("wasteless_user");
+    return stored ? JSON.parse(stored) : null;
+  })();
+
   // No autenticado → al login, guardando de dónde venía
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated && !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Tiene allowedRoles definidos → verificar si el rol del usuario está en la lista
-  if (allowedRoles && !allowedRoles.includes(user.rol as UserRole)) {
+  if (allowedRoles && user && !allowedRoles.includes(user.rol as UserRole)) {
     return <Navigate to={ROLE_HOME[user.rol as UserRole]} replace />;
   }
 

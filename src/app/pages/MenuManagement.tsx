@@ -82,6 +82,31 @@ interface MenuSemanal {
 
 const MENUS_KEY = "wasteless_menus";
 
+const diasVacios = (): MenuSemanal["dias"] => ({
+  lunes:     { desayuno: [], almuerzo: [], cena: [] },
+  martes:    { desayuno: [], almuerzo: [], cena: [] },
+  miercoles: { desayuno: [], almuerzo: [], cena: [] },
+  jueves:    { desayuno: [], almuerzo: [], cena: [] },
+  viernes:   { desayuno: [], almuerzo: [], cena: [] },
+  sabado:    { desayuno: [], almuerzo: [], cena: [] },
+});
+
+function sanitizeDias(dias: unknown): MenuSemanal["dias"] {
+  const base = diasVacios();
+  if (!dias || typeof dias !== "object") return base;
+  const d = dias as Record<string, unknown>;
+  (["lunes", "martes", "miercoles", "jueves", "viernes", "sabado"] as const).forEach((dia) => {
+    const slot = d[dia];
+    if (slot && typeof slot === "object") {
+      const s = slot as Record<string, unknown>;
+      base[dia].desayuno = Array.isArray(s.desayuno) ? s.desayuno : [];
+      base[dia].almuerzo = Array.isArray(s.almuerzo) ? s.almuerzo : [];
+      base[dia].cena     = Array.isArray(s.cena)     ? s.cena     : [];
+    }
+  });
+  return base;
+}
+
 function loadMenusFromStorage(fallback: MenuSemanal[]): MenuSemanal[] {
   try {
     const stored = localStorage.getItem(MENUS_KEY);
@@ -91,6 +116,7 @@ function loadMenusFromStorage(fallback: MenuSemanal[]): MenuSemanal[] {
       ...m,
       fechaInicio: new Date(m.fechaInicio),
       fechaFin: new Date(m.fechaFin),
+      dias: sanitizeDias(m.dias),
     }));
   } catch {
     return fallback;
@@ -217,10 +243,12 @@ export function MenuManagement() {
   };
 
   const getTotalPlatillos = (menu: MenuSemanal) => {
+    if (!menu.dias) return 0;
     let total = 0;
     diasSemana.forEach((dia) => {
+      if (!menu.dias[dia]) return;
       tiposComida.forEach((comida) => {
-        total += menu.dias[dia][comida].length;
+        total += menu.dias[dia][comida]?.length ?? 0;
       });
     });
     return total;

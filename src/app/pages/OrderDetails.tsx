@@ -116,72 +116,44 @@ const tiposComidaIcons: Record<typeof tiposComida[number], string> = {
   cena: "🌙",
 };
 
-export function OrderDetails() {
-  const navigate = useNavigate();
-  const location = useLocation();
+function cargarDatosDetalle(locationState: unknown) {
+  const state = locationState as { semana?: Record<string,unknown>; comedorNombre?: string } | null;
+  let semana = state?.semana;
+  let comedor = state?.comedorNombre;
 
-  // Estados
-  const [selectedSemana, setSelectedSemana] = useState<PedidoSemana | null>(null);
-  const [comedorNombre, setComedorNombre] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [dishes, setDishes] = useState<Dish[]>(() => loadDishes());
-
-  // Cargar datos solo una vez al montar el componente
-  useEffect(() => {
-    let semana = location.state?.semana;
-    let comedor = location.state?.comedorNombre;
-
-    console.log("OrderDetails - location.state:", location.state);
-
-    // Si no hay datos en el state, intentar cargar desde localStorage
-    if (!semana || !comedor) {
+  if (!semana || !comedor) {
+    try {
       const stored = localStorage.getItem('orderDetails');
-      console.log("OrderDetails - localStorage data:", stored);
       if (stored) {
         const data = JSON.parse(stored);
         semana = data.semana;
         comedor = data.comedorNombre;
       }
-    }
-
-    console.log("OrderDetails - semana:", semana);
-    console.log("OrderDetails - comedorNombre:", comedor);
-
-    // Convertir fechas de strings a Date si es necesario
-    if (semana) {
-      const semanaConFechas = {
-        ...semana,
-        fechaInicio: semana.fechaInicio instanceof Date ? semana.fechaInicio : new Date(semana.fechaInicio),
-        fechaFin: semana.fechaFin instanceof Date ? semana.fechaFin : new Date(semana.fechaFin),
-      };
-
-      console.log("OrderDetails - semanaConFechas:", semanaConFechas);
-      setSelectedSemana(semanaConFechas);
-      setComedorNombre(comedor);
-    }
-
-    setIsLoading(false);
-  }, []); // Solo ejecutar una vez al montar
-
-  // Limpiar localStorage cuando el usuario sale de la página
-  useEffect(() => {
-    return () => {
-      localStorage.removeItem('orderDetails');
-    };
-  }, []);
-
-  // Mostrar loading mientras se cargan los datos
-  if (isLoading) {
-    return (
-      <div className="p-8 bg-[#f3f4f6] min-h-screen">
-        <div className="text-center pt-20">
-          <p className="text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    );
+    } catch { /* ignorar */ }
   }
 
-  // Si no hay datos después de cargar
+  if (semana && comedor) {
+    return {
+      semana: {
+        ...semana,
+        fechaInicio: (semana.fechaInicio instanceof Date) ? semana.fechaInicio : new Date(semana.fechaInicio as string),
+        fechaFin:    (semana.fechaFin    instanceof Date) ? semana.fechaFin    : new Date(semana.fechaFin    as string),
+      } as PedidoSemana,
+      comedorNombre: comedor as string,
+    };
+  }
+  return null;
+}
+
+export function OrderDetails() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [datos] = useState(() => cargarDatosDetalle(location.state));
+  const [selectedSemana, setSelectedSemana] = useState<PedidoSemana | null>(datos?.semana ?? null);
+  const comedorNombre = datos?.comedorNombre ?? "";
+  const [dishes] = useState<Dish[]>(() => loadDishes());
+
   if (!selectedSemana || !comedorNombre) {
     return (
       <div className="p-8 bg-[#f3f4f6] min-h-screen">
@@ -194,7 +166,6 @@ export function OrderDetails() {
       </div>
     );
   }
-
   const formatDateRange = (start: Date, end: Date) => {
     return `${format(new Date(start), "d MMM", { locale: es })} - ${format(new Date(end), "d MMM yyyy", { locale: es })}`;
   };

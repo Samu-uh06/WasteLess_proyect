@@ -9,6 +9,9 @@
 //     · Administrador + Gerente: platillos, planeación, producción
 //     · Solo Empleado: rutas /mobile/*
 // - /mobile/login y /mobile/register se mantienen públicas
+// - CORRECCIÓN: los grupos de rutas ya no comparten el mismo
+//   path "/" para evitar que el ProtectedRoute de Administrador
+//   intercepte rutas destinadas al Gerente.
 // ============================================================
 
 import { createBrowserRouter } from "react-router";
@@ -18,7 +21,6 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AdminLogin } from "./pages/AdminLogin";
 import { Dashboard } from "./pages/Dashboard";
 import { Users } from "./pages/Users";
-import { AccessManagement } from "./pages/AccessManagement";
 import { Dishes } from "./pages/Dishes";
 import { Companies } from "./pages/Companies";
 import { Diners } from "./pages/Diners";
@@ -46,10 +48,8 @@ export const router = createBrowserRouter([
     Component: AdminLogin,
   },
 
-  // ── Solo ADMINISTRADOR ────────────────────────────────────
-  // Dashboard, Usuarios, Roles (acceso exclusivo)
+  // ── Solo ADMINISTRADOR: Dashboard, Usuarios y Configuración ─
   {
-    path: "/",
     element: <ProtectedRoute allowedRoles={["Administrador"]} />,
     errorElement: <ErrorBoundary />,
     children: [
@@ -57,16 +57,12 @@ export const router = createBrowserRouter([
         Component: Layout,
         children: [
           {
-            index: true,
+            path: "/",
             Component: Dashboard,
           },
           {
             path: "usuarios/gestion",
             Component: Users,
-          },
-          {
-            path: "usuarios/acceso",
-            Component: AccessManagement,
           },
           {
             path: "configuracion/roles",
@@ -80,7 +76,6 @@ export const router = createBrowserRouter([
   // ── ADMINISTRADOR + GERENTE ───────────────────────────────
   // Platillos, Planeación, Producción
   {
-    path: "/",
     element: <ProtectedRoute allowedRoles={["Administrador", "Gerente"]} />,
     errorElement: <ErrorBoundary />,
     children: [
