@@ -1,440 +1,223 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { ArrowLeft, ChefHat, Trash2 } from "lucide-react";
+import { ArrowLeft, ChefHat, Plus, X } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Card, CardContent } from "../components/ui/card";
 import { toast } from "sonner";
 import { Checkbox } from "../components/ui/checkbox";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../components/ui/popover";
 import { DatePicker } from "../components/ui/date-picker";
 import { ScrollArea } from "../components/ui/scroll-area";
-import { Badge } from "../components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import {
+  loadMenuById, loadMenuPlanning, updateMenu, assignDishToMenu, removeDishFromMenu,
+  loadDiningRooms, loadDishesForMenu,
+  type ApiMenu, type ApiDiningRoom, type ApiDish, type ApiMenuDetail, type MealKey,
+} from "../services/weeklyMenuService";
 
-// Platillos desde Gestión de Platillos
-const mockDishes = [
-  {
-    id: 1,
-    nombre: "Arroz con Pollo",
-    categoria: "Plato Fuerte",
-    descripcion: "Delicioso arroz con pollo desmechado y vegetales",
-    precio: 15000,
-    calorias: 450,
-    imagen: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 2,
-    nombre: "Ensalada César",
-    categoria: "Ensalada",
-    descripcion: "Ensalada fresca con pollo, crutones y aderezo césar",
-    precio: 12000,
-    calorias: 320,
-    imagen: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 3,
-    nombre: "Bandeja Paisa",
-    categoria: "Plato Fuerte",
-    descripcion: "Plato típico colombiano con frijoles, carne, chicharrón y más",
-    precio: 18000,
-    calorias: 850,
-    imagen: "https://images.unsplash.com/photo-1604147706283-d7119b5b822c?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 4,
-    nombre: "Sopa de Lentejas",
-    categoria: "Sopa",
-    descripcion: "Sopa casera de lentejas con vegetales frescos",
-    precio: 8000,
-    calorias: 250,
-    imagen: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 5,
-    nombre: "Tiramisu",
-    categoria: "Postre",
-    descripcion: "Delicioso postre italiano con café y mascarpone",
-    precio: 10000,
-    calorias: 380,
-    imagen: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 6,
-    nombre: "Jugo Natural de Naranja",
-    categoria: "Bebida",
-    descripcion: "Jugo 100% natural de naranja recién exprimida",
-    precio: 5000,
-    calorias: 110,
-    imagen: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 7,
-    nombre: "Pescado al Horno",
-    categoria: "Plato Fuerte",
-    descripcion: "Filete de pescado horneado con hierbas y limón",
-    precio: 20000,
-    calorias: 350,
-    imagen: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 8,
-    nombre: "Pasta Carbonara",
-    categoria: "Plato Fuerte",
-    descripcion: "Pasta con salsa carbonara cremosa y tocino",
-    precio: 16000,
-    calorias: 520,
-    imagen: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 9,
-    nombre: "Huevos Revueltos",
-    categoria: "Desayuno",
-    descripcion: "Huevos revueltos con tomate y cebolla",
-    precio: 8000,
-    calorias: 280,
-    imagen: "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 10,
-    nombre: "Arepas con Queso",
-    categoria: "Desayuno",
-    descripcion: "Arepas rellenas de queso derretido",
-    precio: 6000,
-    calorias: 310,
-    imagen: "https://images.unsplash.com/photo-1626613838013-14ce59de6c3c?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 11,
-    nombre: "Café con Leche",
-    categoria: "Bebida",
-    descripcion: "Café colombiano con leche espumosa",
-    precio: 3000,
-    calorias: 80,
-    imagen: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
-  {
-    id: 12,
-    nombre: "Pan Tostado",
-    categoria: "Desayuno",
-    descripcion: "Pan integral tostado con mantequilla",
-    precio: 4000,
-    calorias: 200,
-    imagen: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=200&fit=crop",
-    estado: "Activo",
-  },
+const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const MEAL_TYPES: { key: MealKey; label: string; icon: string }[] = [
+  { key: "desayuno",   label: "Desayuno",    icon: "🟠" },
+  { key: "almuerzo",   label: "Almuerzo",    icon: "🍽️" },
+  { key: "mediaTarde", label: "Media tarde", icon: "🌙" },
 ];
 
-interface DiaComidas {
-  desayuno: number[];
-  almuerzo: number[];
-  cena: number[];
-}
-
-interface MenuSemanal {
-  id: number;
-  codigo: string;
-  nombre: string;
-  fechaInicio: Date;
-  fechaFin: Date;
-  comedor: string;
-  dias: {
-    lunes: DiaComidas;
-    martes: DiaComidas;
-    miercoles: DiaComidas;
-    jueves: DiaComidas;
-    viernes: DiaComidas;
-    sabado: DiaComidas;
-  };
-  estado: string;
-}
-
-const mockComedores = [
-  { id: 1, nombre: "Comedor Central - Ecopetrol", empresa: "Ecopetrol S.A." },
-  { id: 2, nombre: "Comedor Universidad Nacional", empresa: "Universidad Nacional" },
-  { id: 3, nombre: "Comedor Hospital San Ignacio", empresa: "Hospital San Ignacio" },
-];
-
-const diasSemana = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado"] as const;
-const tiposComida = ["desayuno", "almuerzo", "cena"] as const;
-
-const diasSemanaLabels: Record<typeof diasSemana[number], string> = {
-  lunes: "Lunes",
-  martes: "Martes",
-  miercoles: "Miércoles",
-  jueves: "Jueves",
-  viernes: "Viernes",
-  sabado: "Sábado",
+const MEAL_KEY_TO_API: Record<MealKey, string> = {
+  desayuno:   "Desayuno",
+  almuerzo:   "Almuerzo",
+  mediaTarde: "Media tarde",
 };
 
-const tiposComidaLabels: Record<typeof tiposComida[number], string> = {
-  desayuno: "Desayuno",
-  almuerzo: "Almuerzo",
-  cena: "Cena",
+const API_TO_MEAL_KEY: Record<string, MealKey> = {
+  "Desayuno":    "desayuno",
+  "Almuerzo":    "almuerzo",
+  "Media tarde": "mediaTarde",
 };
 
-const tiposComidaIcons: Record<typeof tiposComida[number], string> = {
-  desayuno: "☀️",
-  almuerzo: "🍽️",
-  cena: "🌙",
-};
-
-// Mock data - en producción esto vendría del backend
-const mockMenus: MenuSemanal[] = [
-  {
-    id: 1,
-    codigo: "MEN-001",
-    nombre: "Menú Ejecutivo Semana 1",
-    fechaInicio: new Date(2025, 2, 3),
-    fechaFin: new Date(2025, 2, 8),
-    comedor: "Comedor Central - Ecopetrol",
-    dias: {
-      lunes: {
-        desayuno: [9, 11, 12],
-        almuerzo: [1, 2, 6],
-        cena: [4, 5],
-      },
-      martes: {
-        desayuno: [10, 11],
-        almuerzo: [3, 2, 6],
-        cena: [7, 5],
-      },
-      miercoles: {
-        desayuno: [9, 11, 12],
-        almuerzo: [8, 2, 6],
-        cena: [1, 4, 5],
-      },
-      jueves: {
-        desayuno: [10, 11],
-        almuerzo: [7, 2, 6],
-        cena: [3, 4],
-      },
-      viernes: {
-        desayuno: [9, 11, 12],
-        almuerzo: [1, 2, 6],
-        cena: [8, 5],
-      },
-      sabado: {
-        desayuno: [10, 11, 12],
-        almuerzo: [3, 2, 6],
-        cena: [7, 4, 5],
-      },
-    },
-    estado: "Activo",
-  },
-  {
-    id: 2,
-    codigo: "MEN-002",
-    nombre: "Menú Saludable Semana 2",
-    fechaInicio: new Date(2025, 2, 10),
-    fechaFin: new Date(2025, 2, 15),
-    comedor: "Comedor Universidad Nacional",
-    dias: {
-      lunes: {
-        desayuno: [10, 11],
-        almuerzo: [8, 2, 6],
-        cena: [4, 5],
-      },
-      martes: {
-        desayuno: [9, 11, 12],
-        almuerzo: [1, 2, 6],
-        cena: [7, 5],
-      },
-      miercoles: {
-        desayuno: [10, 11],
-        almuerzo: [3, 2, 6],
-        cena: [8, 4],
-      },
-      jueves: {
-        desayuno: [9, 11, 12],
-        almuerzo: [7, 2, 6],
-        cena: [1, 5],
-      },
-      viernes: {
-        desayuno: [10, 11],
-        almuerzo: [8, 2, 6],
-        cena: [3, 4, 5],
-      },
-      sabado: {
-        desayuno: [9, 11, 12],
-        almuerzo: [1, 2, 6],
-        cena: [7, 4],
-      },
-    },
-    estado: "Activo",
-  },
-];
+interface CellRef { day: string; meal: MealKey; label: string; icon: string; }
 
 export function EditWeeklyMenu() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const menuId = searchParams.get("id");
+  const menuId = Number(searchParams.get("id"));
 
-  const [formData, setFormData] = useState<Partial<MenuSemanal>>(() => {
-    if (!menuId) return {};
-    const id = parseInt(menuId);
-    try {
-      const stored = localStorage.getItem("wasteless_menus");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const found = parsed.find((m: { id: number }) => m.id === id);
-        if (found) {
-          return {
-            ...found,
-            fechaInicio: found.fechaInicio ? new Date(found.fechaInicio) : undefined,
-            fechaFin:    found.fechaFin    ? new Date(found.fechaFin)    : undefined,
-          };
-        }
-      }
-    } catch { /* ignorar */ }
-    return mockMenus.find(m => m.id === id) ?? {};
-  });
+  const [menu, setMenu] = useState<ApiMenu | null>(null);
+  const [diningRooms, setDiningRooms] = useState<ApiDiningRoom[]>([]);
+  const [availableDishes, setAvailableDishes] = useState<ApiDish[]>([]);
+  const [planning, setPlanning] = useState<Record<string, Record<MealKey, ApiMenuDetail[]>>>({});
 
-  const handleToggleDish = (dia: typeof diasSemana[number], comida: typeof tiposComida[number], dishId: number) => {
-    setFormData((prev) => {
-      const currentDias = prev.dias || {
-        lunes: { desayuno: [], almuerzo: [], cena: [] },
-        martes: { desayuno: [], almuerzo: [], cena: [] },
-        miercoles: { desayuno: [], almuerzo: [], cena: [] },
-        jueves: { desayuno: [], almuerzo: [], cena: [] },
-        viernes: { desayuno: [], almuerzo: [], cena: [] },
-        sabado: { desayuno: [], almuerzo: [], cena: [] },
-      };
+  const [codigo, setCodigo] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [fechaInicio, setFechaInicio] = useState<Date | undefined>();
+  const [fechaFin, setFechaFin] = useState<Date | undefined>();
+  const [idComedor, setIdComedor] = useState<number | null>(null);
 
-      const currentComida = currentDias[dia][comida] || [];
-      const newComida = currentComida.includes(dishId)
-        ? currentComida.filter((id) => id !== dishId)
-        : [...currentComida, dishId];
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [activeCell, setActiveCell] = useState<CellRef | null>(null);
+  const [tempSelected, setTempSelected] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState(false);
 
-      return {
-        ...prev,
-        dias: {
-          ...currentDias,
-          [dia]: {
-            ...currentDias[dia],
-            [comida]: newComida,
-          },
-        },
-      };
-    });
+  useEffect(() => {
+    if (!menuId) return;
+    loadMenuById(menuId).then(m => {
+      setMenu(m);
+      setCodigo(m.codigo);
+      setNombre(m.nombre);
+      setFechaInicio(new Date(m.fechaInicio));
+      setFechaFin(new Date(m.fechaFin));
+      setIdComedor(m.idComedor);
+    }).catch(() => toast.error("Error al cargar menú"));
+
+    loadMenuPlanning(menuId).then(data => {
+      // Convertir planning de la API al formato del estado local
+      const converted: Record<string, Record<MealKey, ApiMenuDetail[]>> = {};
+      DAYS.forEach(day => {
+        converted[day] = { desayuno: [], almuerzo: [], mediaTarde: [] };
+        Object.entries(data.planning[day] || {}).forEach(([apiMeal, items]) => {
+          const key = API_TO_MEAL_KEY[apiMeal];
+          if (key) converted[day][key] = items as ApiMenuDetail[];
+        });
+      });
+      setPlanning(converted);
+    }).catch(() => toast.error("Error al cargar planificación"));
+
+    loadDiningRooms().then(setDiningRooms).catch(() => {});
+    loadDishesForMenu().then(setAvailableDishes).catch(() => {});
+  }, [menuId]);
+
+  const openCellDialog = (day: string, meal: MealKey, label: string, icon: string) => {
+    setActiveCell({ day, meal, label, icon });
+    const already = (planning[day]?.[meal] || []).map(d => d.idPlatillo);
+    setTempSelected(new Set(already));
+    setDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const confirmSelection = async () => {
+    if (!activeCell || !menuId) return;
+    const { day, meal } = activeCell;
+    const currentIds = (planning[day]?.[meal] || []).map(d => d.idPlatillo);
+    const toAdd = Array.from(tempSelected).filter(id => !currentIds.includes(id));
+    const toRemove = (planning[day]?.[meal] || []).filter(d => !tempSelected.has(d.idPlatillo));
 
-    // Validación
-    if (!formData.nombre || !formData.fechaInicio || !formData.fechaFin || !formData.comedor) {
+    try {
+      for (const item of toRemove) {
+        await removeDishFromMenu(menuId, item.idDetalle);
+      }
+      for (const id of toAdd) {
+        await assignDishToMenu(menuId, {
+          diaSemana: day,
+          tipoComida: MEAL_KEY_TO_API[meal],
+          idPlatillo: id,
+        });
+      }
+      const data = await loadMenuPlanning(menuId);
+      const converted: Record<string, Record<MealKey, ApiMenuDetail[]>> = {};
+      DAYS.forEach(d => {
+        converted[d] = { desayuno: [], almuerzo: [], mediaTarde: [] };
+        Object.entries(data.planning[d] || {}).forEach(([apiMeal, items]) => {
+          const key = API_TO_MEAL_KEY[apiMeal];
+          if (key) converted[d][key] = items as ApiMenuDetail[];
+        });
+      });
+      setPlanning(converted);
+      toast.success("Platillos actualizados");
+    } catch (err: any) {
+      toast.error(err?.message || "Error al actualizar platillos");
+    }
+    setDialogOpen(false);
+  };
+
+  const handleRemoveDish = async (day: string, meal: MealKey, item: ApiMenuDetail) => {
+    if (!menuId) return;
+    try {
+      await removeDishFromMenu(menuId, item.idDetalle);
+      setPlanning(prev => ({
+        ...prev,
+        [day]: {
+          ...prev[day],
+          [meal]: prev[day][meal].filter(d => d.idDetalle !== item.idDetalle),
+        },
+      }));
+      toast.success(`${item.nombrePlatillo} eliminado`);
+    } catch (err: any) {
+      toast.error(err?.message || "Error al eliminar platillo");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre || !fechaInicio || !fechaFin || !idComedor || !codigo) {
       toast.error("Por favor completa todos los campos obligatorios");
       return;
     }
-
-    // En producción, aquí se enviaría la actualización al backend
-    toast.success("💾 Menú actualizado exitosamente");
-    navigate("/planeacion/menu");
+    setLoading(true);
+    try {
+      await updateMenu(menuId, {
+        codigo,
+        nombre,
+        idComedor,
+        fechaInicio: fechaInicio.toISOString().split("T")[0],
+        fechaFin: fechaFin.toISOString().split("T")[0],
+      });
+      toast.success("Menú actualizado exitosamente");
+      navigate("/planeacion/menu");
+    } catch (err: any) {
+      toast.error(err?.message || "Error al actualizar menú");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (!menu) return <div className="min-h-screen bg-[#f3f4f6] p-8 flex items-center justify-center"><p className="text-gray-500">Cargando...</p></div>;
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] p-8">
       <div className="max-w-[1600px] mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/planeacion/menu")}
-            className="gap-2 mb-4 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Volver a Menús
-          </Button>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/planeacion/menu")} className="gap-2 mb-4 text-gray-600 hover:text-gray-900">
+          <ArrowLeft className="w-4 h-4" /> Volver a Menús
+        </Button>
 
-          <div className="flex items-start gap-3">
-            <div className="bg-blue-100 rounded-lg p-3 flex items-center justify-center">
-              <ChefHat className="w-6 h-6 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                Editar Menú Semanal
-              </h1>
-            </div>
+        <div className="flex items-start gap-3 mb-6">
+          <div className="bg-blue-100 rounded-lg p-3 flex items-center justify-center">
+            <ChefHat className="w-6 h-6 text-blue-600" />
           </div>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">Editar Menú Semanal</h1>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-5">
-            {/* Información básica */}
             <Card className="border-blue-200 shadow-sm">
               <CardContent className="p-4">
                 <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
                   <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
                   Información General
                 </h3>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-5 gap-3">
                   <div>
-                    <Label htmlFor="nombre" className="text-xs font-semibold text-gray-700 mb-1 block">Nombre del Menú *</Label>
-                    <Input
-                      id="nombre"
-                      value={formData.nombre || ""}
-                      onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                      placeholder="Ej: Menú Ejecutivo Semana 1"
-                      className="h-9 text-sm"
-                      required
-                    />
+                    <Label className="text-xs font-semibold text-gray-700 mb-1 block">Código *</Label>
+                    <Input value={codigo} onChange={e => setCodigo(e.target.value)} className="h-9 text-sm" required />
                   </div>
                   <div>
-                    <Label htmlFor="fechaInicio" className="text-xs font-semibold text-gray-700 mb-1 block">Fecha Inicio *</Label>
-                    <DatePicker
-                      date={formData.fechaInicio}
-                      onDateChange={(date) => setFormData({ ...formData, fechaInicio: date })}
-                      placeholder="Selecciona fecha inicio"
-                      className="h-9 text-sm"
-                    />
+                    <Label className="text-xs font-semibold text-gray-700 mb-1 block">Nombre del Menú *</Label>
+                    <Input value={nombre} onChange={e => setNombre(e.target.value)} className="h-9 text-sm" required />
                   </div>
                   <div>
-                    <Label htmlFor="fechaFin" className="text-xs font-semibold text-gray-700 mb-1 block">Fecha Fin *</Label>
-                    <DatePicker
-                      date={formData.fechaFin}
-                      onDateChange={(date) => setFormData({ ...formData, fechaFin: date })}
-                      placeholder="Selecciona fecha fin"
-                      className="h-9 text-sm"
-                    />
+                    <Label className="text-xs font-semibold text-gray-700 mb-1 block">Fecha Inicio *</Label>
+                    <DatePicker date={fechaInicio} onDateChange={setFechaInicio} placeholder="Fecha inicio" className="h-9 text-sm" />
                   </div>
                   <div>
-                    <Label htmlFor="comedor" className="text-xs font-semibold text-gray-700 mb-1 block">Comedor *</Label>
-                    <Select
-                      value={formData.comedor || ""}
-                      onValueChange={(value) => setFormData({ ...formData, comedor: value })}
-                    >
-                      <SelectTrigger id="comedor" className="h-9 text-sm">
-                        <SelectValue placeholder="Seleccione comedor" />
-                      </SelectTrigger>
+                    <Label className="text-xs font-semibold text-gray-700 mb-1 block">Fecha Fin *</Label>
+                    <DatePicker date={fechaFin} onDateChange={setFechaFin} placeholder="Fecha fin" className="h-9 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-700 mb-1 block">Comedor *</Label>
+                    <Select value={idComedor ? String(idComedor) : ""} onValueChange={v => setIdComedor(Number(v))}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Seleccione comedor" /></SelectTrigger>
                       <SelectContent>
-                        {mockComedores.map((comedor) => (
-                          <SelectItem key={comedor.id} value={comedor.nombre}>
-                            {comedor.nombre}
-                          </SelectItem>
+                        {diningRooms.map(d => (
+                          <SelectItem key={d.idComedor} value={String(d.idComedor)}>{d.nombre}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -443,7 +226,6 @@ export function EditWeeklyMenu() {
               </CardContent>
             </Card>
 
-            {/* Tabla de platillos */}
             <Card className="border-orange-200 shadow-sm">
               <CardContent className="p-4">
                 <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
@@ -455,125 +237,41 @@ export function EditWeeklyMenu() {
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-orange-50">
-                          <th className="border-r border-orange-200 p-2 text-left text-xs font-bold text-gray-700 w-28 sticky left-0 bg-orange-50 z-10">
-                            Comida
-                          </th>
-                          {diasSemana.map((dia) => (
-                            <th
-                              key={dia}
-                              className="border-r last:border-r-0 border-orange-200 p-2 text-center text-xs font-bold text-gray-700 min-w-[140px]"
-                            >
-                              {diasSemanaLabels[dia]}
-                            </th>
+                          <th className="border-r border-orange-200 p-2 text-left text-xs font-bold text-gray-700 w-28 sticky left-0 bg-orange-50 z-10">Comida</th>
+                          {DAYS.map(day => (
+                            <th key={day} className="border-r last:border-r-0 border-orange-200 p-2 text-center text-xs font-bold text-gray-700 min-w-[150px]">{day}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {tiposComida.map((comida, idx) => (
-                          <tr key={comida} className={idx % 2 === 0 ? "bg-white" : "bg-orange-50/30"}>
-                            <td className="border-r border-t border-orange-200 p-2 font-semibold text-xs text-gray-700 sticky left-0 bg-gradient-to-r from-orange-50 to-white z-10">
+                        {MEAL_TYPES.map((meal, idx) => (
+                          <tr key={meal.key} className={idx % 2 === 0 ? "bg-white" : "bg-orange-50/30"}>
+                            <td className="border-r border-t border-orange-200 p-2 sticky left-0 bg-gradient-to-r from-orange-50 to-white z-10">
                               <div className="flex items-center gap-1.5">
-                                <span className="text-sm">{tiposComidaIcons[comida]}</span>
-                                <span className="text-xs">{tiposComidaLabels[comida]}</span>
+                                <span className="text-sm">{meal.icon}</span>
+                                <span className="text-xs font-semibold text-gray-700">{meal.label}</span>
                               </div>
                             </td>
-                            {diasSemana.map((dia) => {
-                              const selectedDishes = formData.dias?.[dia]?.[comida] || [];
+                            {DAYS.map(day => {
+                              const dishes = planning[day]?.[meal.key] || [];
                               return (
-                                <td key={`${dia}-${comida}`} className="border-r last:border-r-0 border-t border-orange-200 p-1.5 align-top">
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="w-full text-xs h-auto py-1.5 px-2 hover:bg-blue-50 hover:border-blue-300 transition-colors font-normal"
-                                      >
-                                        {selectedDishes.length > 0
-                                          ? `${selectedDishes.length} ✓`
-                                          : "+"}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[340px] p-0" align="start">
-                                      <div className="bg-gradient-to-r from-blue-50 to-white p-3 border-b">
-                                        <h4 className="font-bold text-xs flex items-center gap-1.5">
-                                          <span className="text-base">{tiposComidaIcons[comida]}</span>
-                                          {diasSemanaLabels[dia]} - {tiposComidaLabels[comida]}
-                                        </h4>
-                                        <p className="text-xs text-gray-600 mt-0.5">
-                                          {selectedDishes.length} platillo{selectedDishes.length !== 1 ? "s" : ""}
-                                        </p>
-                                      </div>
-                                      <ScrollArea className="h-[320px]">
-                                        <div className="p-2 space-y-1">
-                                          {mockDishes.map((dish) => (
-                                            <div
-                                              key={dish.id}
-                                              className={`flex items-start space-x-2 p-2 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer border ${
-                                                selectedDishes.includes(dish.id) ? "bg-blue-50 border-blue-200" : "border-transparent"
-                                              }`}
-                                              onClick={() => handleToggleDish(dia, comida, dish.id)}
-                                            >
-                                              <Checkbox
-                                                id={`${dia}-${comida}-${dish.id}`}
-                                                checked={selectedDishes.includes(dish.id)}
-                                                onCheckedChange={() => handleToggleDish(dia, comida, dish.id)}
-                                                className="mt-0.5"
-                                              />
-                                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                <img
-                                                  src={dish.imagen}
-                                                  alt={dish.nombre}
-                                                  className="w-10 h-10 rounded-lg object-cover shadow-sm"
-                                                />
-                                                <div className="flex-1 min-w-0">
-                                                  <p className="text-xs font-semibold text-gray-900 truncate">
-                                                    {dish.nombre}
-                                                  </p>
-                                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                                    <Badge variant="outline" className="text-[10px] px-1 py-0">
-                                                      {dish.categoria}
-                                                    </Badge>
-                                                    <span className="text-[10px] text-gray-500">
-                                                      ${dish.precio.toLocaleString()}
-                                                    </span>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          ))}
+                                <td key={`${day}-${meal.key}`} className="border-r last:border-r-0 border-t border-orange-200 p-1.5 align-top">
+                                  <button type="button" onClick={() => openCellDialog(day, meal.key, meal.label, meal.icon)}
+                                    className="w-full border border-gray-200 rounded text-xs h-7 flex items-center justify-center gap-1 hover:bg-blue-50 hover:border-blue-300 transition-colors text-gray-500 hover:text-blue-600">
+                                    <Plus className="w-3 h-3" />
+                                    {dishes.length > 0 && <span className="font-semibold text-blue-600">{dishes.length}</span>}
+                                  </button>
+                                  {dishes.length > 0 && (
+                                    <div className="mt-1 space-y-0.5">
+                                      {dishes.map(dish => (
+                                        <div key={dish.idDetalle} className="bg-blue-500 text-white text-[10px] px-1.5 py-1 rounded flex items-center gap-1 hover:bg-blue-600 transition-colors">
+                                          <span className="truncate flex-1" title={dish.nombrePlatillo}>{dish.nombrePlatillo}</span>
+                                          <button type="button" onClick={() => handleRemoveDish(day, meal.key, dish)}
+                                            className="shrink-0 hover:bg-red-500 rounded p-0.5 transition-colors">
+                                            <X className="w-2.5 h-2.5" />
+                                          </button>
                                         </div>
-                                      </ScrollArea>
-                                    </PopoverContent>
-                                  </Popover>
-                                  {selectedDishes.length > 0 && (
-                                    <div className="mt-1 space-y-1">
-                                      {/* Lista de platillos con botón eliminar individual */}
-                                      <div className="flex flex-col gap-0.5">
-                                        {selectedDishes.map((dishId) => {
-                                          const dish = mockDishes.find((d) => d.id === dishId);
-                                          return dish ? (
-                                            <div
-                                              key={dishId}
-                                              className="bg-blue-500 text-white text-[10px] px-1.5 py-1 rounded flex items-center justify-between gap-1 group hover:bg-blue-600 transition-colors"
-                                            >
-                                              <span className="truncate flex-1" title={dish.nombre}>
-                                                {dish.nombre}
-                                              </span>
-                                              <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  handleToggleDish(dia, comida, dishId);
-                                                  toast.success(`${dish.nombre} eliminado`);
-                                                }}
-                                                className="shrink-0 hover:bg-red-500 rounded p-0.5 transition-colors"
-                                              >
-                                                <Trash2 className="w-3 h-3" />
-                                              </button>
-                                            </div>
-                                          ) : null;
-                                        })}
-                                      </div>
+                                      ))}
                                     </div>
                                   )}
                                 </td>
@@ -589,25 +287,52 @@ export function EditWeeklyMenu() {
             </Card>
           </div>
 
-          {/* Footer Actions */}
           <div className="flex justify-end gap-3 mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/planeacion/menu")}
-              className="px-6"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="bg-[#e7000b] hover:bg-[#c10009] text-white shadow-lg px-6"
-            >
-              💾 Guardar Cambios
+            <Button type="button" variant="outline" onClick={() => navigate("/planeacion/menu")} className="px-6">Cancelar</Button>
+            <Button type="submit" disabled={loading} className="bg-[#e7000b] hover:bg-[#c10009] text-white shadow-lg px-6">
+              {loading ? "Guardando..." : "💾 Guardar Cambios"}
             </Button>
           </div>
         </form>
       </div>
+
+      {/* Dialog selector de platillos */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md p-0">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b bg-gradient-to-r from-blue-50 to-white">
+            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+              <span className="text-lg">{activeCell?.icon}</span>
+              {activeCell?.day} — {activeCell?.label}
+            </DialogTitle>
+            <p className="text-xs text-gray-500 mt-0.5">{tempSelected.size} platillos seleccionados</p>
+          </DialogHeader>
+          <ScrollArea className="h-72">
+            <div className="p-3 space-y-1">
+              {availableDishes.map(dish => {
+                const selected = tempSelected.has(dish.idPlatillo);
+                return (
+                  <div key={dish.idPlatillo}
+                    className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer border transition-colors ${selected ? "bg-blue-50 border-blue-200" : "border-transparent hover:bg-gray-50"}`}
+                    onClick={() => setTempSelected(prev => { const next = new Set(prev); next.has(dish.idPlatillo) ? next.delete(dish.idPlatillo) : next.add(dish.idPlatillo); return next; })}>
+                    <Checkbox checked={selected} />
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {dish.imagen && <img src={dish.imagen} alt={dish.nombre} className="w-10 h-10 rounded-lg object-cover" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{dish.nombre}</p>
+                        <p className="text-xs text-gray-400">{dish.nombreCategoria}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+          <div className="px-4 py-3 border-t bg-gray-50 flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button size="sm" onClick={confirmSelection} className="bg-[#e7000b] hover:bg-[#c40009]">Confirmar selección</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

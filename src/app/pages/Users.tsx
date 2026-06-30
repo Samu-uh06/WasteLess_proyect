@@ -1,52 +1,26 @@
-// ============================================================
-// CAMBIOS EN ESTE ARCHIVO:
-//
-// 1. Se importa `generarContrasenaAleatoria` y `enviarCorreoBienvenida`
-//    desde el nuevo archivo de utilidades.
-//
-// 2. Se añade el campo `contrasena` y `requiereCambioContrasena` al
-//    tipo User para rastrear el primer inicio de sesión.
-//
-// 3. handleCreateUser ahora:
-//    - Genera una contraseña aleatoria
-//    - Guarda la contraseña en el usuario (en producción iría al backend)
-//    - Envía el correo de bienvenida con las credenciales
-//    - Marca requiereCambioContrasena = true
-//
-// BUSCA LOS COMENTARIOS "// ✅ NUEVO" PARA VER CADA CAMBIO
-// ============================================================
-
-import { useState } from "react";
-import { Plus, Search, Eye, Edit, Trash2, User as UserIcon, Users as UsersIcon, Shield } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Plus, Search, Eye, Edit, Trash2, User as UserIcon, Users as UsersIcon, Shield, Pencil } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Switch } from "../components/ui/switch";
 import { Card, CardContent } from "../components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../components/ui/alert-dialog";
 import { CreateUserDialog, UserFormData } from "../components/users/CreateUserDialog";
 import { ViewUserDialog } from "../components/users/ViewUserDialog";
 import { EditUserDialog } from "../components/users/EditUserDialog";
 import { toast } from "sonner";
+import {
+  generarContrasenaAleatoria,
+  enviarCorreoBienvenida,
+} from "../utils/emailService";
 
-// ✅ NUEVO: Importar utilidades de email
-import { generarContrasenaAleatoria, enviarCorreoBienvenida } from "../utils/emailService";
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+const getHeaders = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${sessionStorage.getItem("wasteless_token")}`,
+});
 
 export interface User {
   id: number;
@@ -57,87 +31,28 @@ export interface User {
   telefono: string;
   empresa: string;
   rol: string;
+  idRol: number;
   estado: boolean;
   fechaRegistro?: string;
-  // ✅ NUEVO: Campos para manejo de contraseña temporal
-  contrasena?: string;
-  requiereCambioContrasena?: boolean;
 }
 
-const initialUsers: User[] = [
-  {
-    id: 1,
-    tipoDocumento: "CC",
-    documento: "10537827",
-    nombre: "Samuel Umego",
-    email: "samuelumego@gmail.com",
-    telefono: "+57 310 123 4567",
-    empresa: "Sena",
-    rol: "Administrador",
-    estado: true,
-    fechaRegistro: "2024-01-15",
-    requiereCambioContrasena: false,
-  },
-  {
-    id: 2,
-    tipoDocumento: "CC",
-    documento: "98273364",
-    nombre: "Miguel Appel",
-    email: "miguelyappel@hotmail.com",
-    telefono: "+57 300 456 7890",
-    empresa: "Prodigal A3",
-    rol: "Empleado",
-    estado: true,
-    fechaRegistro: "2024-02-10",
-    requiereCambioContrasena: false,
-  },
-  {
-    id: 3,
-    tipoDocumento: "CC",
-    documento: "77654321",
-    nombre: "Ana María Delgado",
-    email: "anamaria@hotmail.com",
-    telefono: "+57 315 789 0123",
-    empresa: "Prodigal A3",
-    rol: "Empleado",
-    estado: true,
-    fechaRegistro: "2024-01-20",
-    requiereCambioContrasena: false,
-  },
-  {
-    id: 4,
-    tipoDocumento: "CC",
-    documento: "110987654",
-    nombre: "Andrés Gómez",
-    email: "andresgomez@hotmail.com",
-    telefono: "+57 312 345 6789",
-    empresa: "Ecopetrol S.A.",
-    rol: "Supervisor",
-    estado: true,
-    fechaRegistro: "2024-03-05",
-    requiereCambioContrasena: false,
-  },
-  {
-    id: 5,
-    tipoDocumento: "CC",
-    documento: "89308927",
-    nombre: "José Maria Martínez",
-    email: "josemaria@hotmail.com",
-    telefono: "+57 320 987 6543",
-    empresa: "Universidad Nacional",
-    rol: "Empleado",
-    estado: false,
-    fechaRegistro: "2023-12-01",
-    requiereCambioContrasena: false,
-  },
-];
+const mapUser = (u: any): User => ({
+  id: Number(u.idUsuario),
+  tipoDocumento: u.tipoDocumento,
+  documento: u.numeroDocumento,
+  nombre: u.nombreCompleto,
+  email: u.email,
+  telefono: u.telefono || "",
+  empresa: u.empresa || "",
+  rol: u.nombreRol || "",
+  idRol: Number(u.idRol),
+  estado: u.estado === "activo",
+  fechaRegistro: u.fechaCreacion?.split("T")[0],
+});
 
 export function Users() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRol, setSelectedRol] = useState("all");
-
-  // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -145,7 +60,18 @@ export function Users() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
-  // Calculate stats
+  const loadUsers = useCallback(async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/users`, { headers: getHeaders() });
+      const json = await res.json();
+      if (json.success) setUsers(json.data.map(mapUser));
+    } catch {
+      toast.error("Error al cargar usuarios");
+    }
+  }, []);
+
+  useEffect(() => { loadUsers(); }, [loadUsers]);
+
   const stats = {
     total: users.length,
     activos: users.filter((u) => u.estado).length,
@@ -154,30 +80,10 @@ export function Users() {
   };
 
   const statsCards = [
-    {
-      title: "Total Usuarios",
-      value: stats.total.toString(),
-      icon: UsersIcon,
-      iconBg: "bg-[#3b82f6]",
-    },
-    {
-      title: "Usuarios Activos",
-      value: stats.activos.toString(),
-      icon: UsersIcon,
-      iconBg: "bg-[#10b981]",
-    },
-    {
-      title: "Usuarios Inactivos",
-      value: stats.inactivos.toString(),
-      icon: UsersIcon,
-      iconBg: "bg-[#6b7280]",
-    },
-    {
-      title: "Administradores",
-      value: stats.administradores.toString(),
-      icon: Shield,
-      iconBg: "bg-[#e7000b]",
-    },
+    { title: "Total Usuarios",      value: stats.total.toString(),          icon: UsersIcon, iconBg: "bg-[#3b82f6]" },
+    { title: "Usuarios Activos",    value: stats.activos.toString(),        icon: UsersIcon, iconBg: "bg-[#10b981]" },
+    { title: "Usuarios Inactivos",  value: stats.inactivos.toString(),      icon: UsersIcon, iconBg: "bg-[#6b7280]" },
+    { title: "Administradores",     value: stats.administradores.toString(),icon: Shield,    iconBg: "bg-[#e7000b]" },
   ];
 
   const filteredUsers = users.filter((user) => {
@@ -185,94 +91,119 @@ export function Users() {
       user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.documento.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRol = selectedRol === "all" || user.rol === selectedRol;
-    return matchesSearch && matchesRol;
+    return matchesSearch;
   });
 
-  // ✅ NUEVO: handleCreateUser ahora genera contraseña y envía correo
   const handleCreateUser = async (formData: UserFormData) => {
-    // 1. Generar contraseña aleatoria segura
-    const contrasenaGenerada = generarContrasenaAleatoria();
-
-    // 2. Crear el nuevo usuario con la contraseña temporal
-    const newUser: User = {
-      id: users.length + 1,
-      tipoDocumento: formData.tipoDocumento,
-      documento: formData.documento,
-      nombre: `${formData.nombre} ${formData.apellido}`,
-      email: formData.email,
-      telefono: formData.telefono,
-      empresa: formData.empresa,
-      rol: formData.rol,
-      estado: true,
-      fechaRegistro: new Date().toISOString().split("T")[0],
-      contrasena: contrasenaGenerada,         // Contraseña temporal
-      requiereCambioContrasena: true,          // Obligar cambio al primer login
-    };
-
-    setUsers([...users, newUser]);
-    setCreateDialogOpen(false);
-
-    // 3. Enviar correo con credenciales
     try {
+      const contrasena = generarContrasenaAleatoria();
+
+      const res = await fetch(`${BASE_URL}/api/users`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          nombres: formData.nombre,
+          apellidos: formData.apellido,
+          tipoDocumento: formData.tipoDocumento,
+          numeroDocumento: formData.documento,
+          email: formData.email,
+          telefono: formData.telefono,
+          empresa: formData.empresa,
+          idRol: Number(formData.rol),
+          password: contrasena,
+        }),
+      });
+
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+
       await enviarCorreoBienvenida({
         email: formData.email,
         nombre: `${formData.nombre} ${formData.apellido}`,
         documento: formData.documento,
         rol: formData.rol,
-        contrasena: contrasenaGenerada,
+        contrasena,
       });
-      toast.success(
-        `Usuario creado exitosamente. Se enviaron las credenciales a ${formData.email}`
-      );
-    } catch (error) {
-      console.error("Error enviando correo:", error);
-      // El usuario se creó, pero el correo falló
-      toast.warning(
-        "Usuario creado, pero no se pudo enviar el correo. Verifica la configuración de EmailJS."
-      );
+
+      await loadUsers();
+      setCreateDialogOpen(false);
+      toast.success("Usuario creado y correo enviado exitosamente");
+    } catch (err: any) {
+      toast.error(err.message || "Error al crear el usuario");
     }
   };
 
-  const handleViewUser = (user: User) => {
-    setSelectedUser(user);
-    setViewDialogOpen(true);
+  const handleEditUser = async (id: number, formData: Partial<User>) => {
+    try {
+      const user = users.find((u) => u.id === id);
+      const [nombres, ...rest] = (formData.nombre || "").split(" ");
+      const apellidos = rest.join(" ");
+      const res = await fetch(`${BASE_URL}/api/users/${id}`, {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          nombres,
+          apellidos,
+          tipoDocumento: formData.tipoDocumento,
+          numeroDocumento: formData.documento,
+          email: formData.email,
+          telefono: formData.telefono,
+          empresa: formData.empresa,
+          idRol: formData.idRol || user?.idRol,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      await loadUsers();
+      setEditDialogOpen(false);
+      toast.success("Usuario actualizado exitosamente");
+    } catch (err: any) {
+      toast.error(err.message || "Error al actualizar el usuario");
+    }
   };
 
-  const handleEditUser = (id: number, formData: Partial<User>) => {
-    setUsers(
-      users.map((u) =>
-        u.id === id
-          ? { ...u, ...formData }
-          : u
-      )
-    );
-    setEditDialogOpen(false);
-    toast.success("Usuario actualizado exitosamente");
+  const handleToggleEstado = async (user: User) => {
+    try {
+      const nuevoEstado = user.estado ? "inactivo" : "activo";
+      const res = await fetch(`${BASE_URL}/api/users/${user.id}/status`, {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({ estado: nuevoEstado }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error();
+      await loadUsers();
+      toast.success("Estado actualizado exitosamente");
+    } catch {
+      toast.error("Error al cambiar el estado");
+    }
   };
 
-  const handleToggleEstado = (userId: number) => {
-    setUsers(
-      users.map((u) =>
-        u.id === userId ? { ...u, estado: !u.estado } : u
-      )
-    );
-    toast.success("Estado del usuario actualizado");
-  };
-
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async () => {
     if (!userToDelete) return;
-    setUsers(users.filter((u) => u.id !== userToDelete.id));
-    setDeleteDialogOpen(false);
-    setUserToDelete(null);
-    toast.success("Usuario eliminado exitosamente");
+    try {
+      const res = await fetch(`${BASE_URL}/api/users/${userToDelete.id}`, {
+        method: "DELETE",
+        headers: getHeaders(),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      await loadUsers();
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      toast.success("Usuario eliminado exitosamente");
+    } catch (err: any) {
+      toast.error(err.message || "Error al eliminar el usuario");
+    }
   };
 
-  // El resto del JSX es idéntico al original — solo se cambió handleCreateUser arriba
-  return (
-    <div className="p-6 space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4">
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+          <p className="text-sm text-gray-600">Administra los usuarios del sistema y sus roles</p>
+        </div>
+        <div className="grid grid-cols-4 gap-4">
         {statsCards.map((card) => (
           <Card key={card.title}>
             <CardContent className="p-4 flex items-center gap-3">
@@ -288,29 +219,21 @@ export function Users() {
         ))}
       </div>
 
-      {/* Header and filters */}
       <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Buscar por nombre, email o documento..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 w-80"
-            />
-          </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Buscar por nombre, email o documento..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 w-80"
+          />
         </div>
-        <Button
-          onClick={() => setCreateDialogOpen(true)}
-          className="bg-[#e7000b] hover:bg-[#c10009] text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Crear Usuario
+        <Button onClick={() => setCreateDialogOpen(true)} className="bg-[#e7000b] hover:bg-[#c10009] text-white">
+          <Plus className="w-4 h-4 mr-2" />Crear
         </Button>
       </div>
 
-      {/* Table */}
       <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
         <Table>
           <TableHeader>
@@ -326,19 +249,15 @@ export function Users() {
           </TableHeader>
           <TableBody>
             {filteredUsers.map((user) => {
-              // Colores de badge por rol
               const rolColors: Record<string, string> = {
                 Administrador: "bg-red-100 text-red-600",
-                Empleado:      "bg-gray-100 text-gray-600",
-                Supervisor:    "bg-purple-100 text-purple-600",
-                Cocinero:      "bg-orange-100 text-orange-600",
+                Empleado: "bg-gray-100 text-gray-600",
+                Supervisor: "bg-purple-100 text-purple-600",
+                Cocinero: "bg-orange-100 text-orange-600",
               };
               const rolColor = rolColors[user.rol] ?? "bg-gray-100 text-gray-600";
-
               return (
                 <TableRow key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-
-                  {/* Usuario: avatar + nombre + teléfono */}
                   <TableCell className="py-4 pl-6">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -350,68 +269,51 @@ export function Users() {
                       </div>
                     </div>
                   </TableCell>
-
-                  {/* Documento: tipo encima, número abajo */}
                   <TableCell className="py-4">
                     <p className="text-gray-900 text-sm font-medium">{user.tipoDocumento}</p>
                     <p className="text-gray-400 text-xs mt-0.5">{user.documento}</p>
                   </TableCell>
-
-                  {/* Email */}
                   <TableCell className="py-4 text-sm text-gray-600">{user.email}</TableCell>
-
-                  {/* Empresa */}
                   <TableCell className="py-4 text-sm text-gray-600">{user.empresa}</TableCell>
-
-                  {/* Rol badge */}
                   <TableCell className="py-4">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${rolColor}`}>
-                      {user.rol}
-                    </span>
+                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${rolColor}`}>{user.rol}</span>
                   </TableCell>
 
-                  {/* Estado badge */}
+                  {/* ← ESTADO con Switch */}
                   <TableCell className="py-4">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                      user.estado
-                        ? "bg-green-100 text-green-600"
-                        : "bg-gray-100 text-gray-400"
-                    }`}>
-                      {user.estado ? "Activo" : "Inactivo"}
-                    </span>
+                    <Switch
+                      checked={user.estado}
+                      onCheckedChange={() => handleToggleEstado(user)}
+                      className={user.estado ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-red-500"}
+                    />
                   </TableCell>
 
-                  {/* Acciones: iconos individuales + toggle */}
-                  <TableCell className="py-4 pr-6">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleViewUser(user)}
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-                        title="Ver"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => { setSelectedUser(user); setEditDialogOpen(true); }}
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => { setUserToDelete(user); setDeleteDialogOpen(true); }}
-                        className="text-red-400 hover:text-red-600 transition-colors p-1"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <Switch
-                        checked={user.estado}
-                        onCheckedChange={() => handleToggleEstado(user.id)}
-                      />
-                    </div>
-                  </TableCell>
-
+                  {/* ← ACCIONES sin Switch */}
+                <TableCell className="py-4 pr-6">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => { setSelectedUser(user); setViewDialogOpen(true); }}
+                      className="bg-green-400/80 hover:bg-green-500 text-white p-2.5 rounded-xl transition-colors"
+                      title="Ver"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => { setSelectedUser(user); setEditDialogOpen(true); }}
+                      className="bg-blue-400/80 hover:bg-blue-500 text-white p-2.5 rounded-xl transition-colors"
+                      title="Editar"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => { setUserToDelete(user); setDeleteDialogOpen(true); }}
+                      className="bg-red-400/80 hover:bg-red-500 text-white p-2.5 rounded-xl transition-colors"
+                      title="Eliminar"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </TableCell>
                 </TableRow>
               );
             })}
@@ -419,33 +321,15 @@ export function Users() {
         </Table>
       </div>
 
-      {/* Dialogs */}
-      <CreateUserDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSubmit={(data) => { handleCreateUser(data); }}
-      />
+      <CreateUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} onSubmit={handleCreateUser} />
 
       {selectedUser && (
-        <ViewUserDialog
-          open={viewDialogOpen}
-          onOpenChange={setViewDialogOpen}
-          user={selectedUser}
-          onEdit={(user) => {
-            setSelectedUser(user);
-            setViewDialogOpen(false);
-            setEditDialogOpen(true);
-          }}
-        />
+        <ViewUserDialog open={viewDialogOpen} onOpenChange={setViewDialogOpen} user={selectedUser}
+          onEdit={(user) => { setSelectedUser(user); setViewDialogOpen(false); setEditDialogOpen(true); }} />
       )}
 
       {selectedUser && (
-        <EditUserDialog
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          user={selectedUser}
-          onSubmit={handleEditUser}
-        />
+        <EditUserDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} user={selectedUser} onSubmit={handleEditUser} />
       )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -459,12 +343,7 @@ export function Users() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteUser}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Eliminar
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-red-600 hover:bg-red-700">Eliminar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,365 +1,336 @@
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "../ui/dialog";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "../ui/select";
 import { toast } from "sonner";
-import { Plus, X, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, Trash2, Plus, X } from "lucide-react";
+import { Card, CardContent } from "../ui/card";
 import { DatePicker } from "../ui/date-picker";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "../ui/dialog";
+import { Checkbox } from "../ui/checkbox";
+import { ScrollArea } from "../ui/scroll-area";
+import { loadActiveDishes, type Dish } from "../../services/dishesService";
+import { addMenu, emptyWeekPlan, type MealKey } from "../../services/weeklyMenuService";
 
-interface CreateWeeklyMenuDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (data: MenuFormData) => void;
-}
+const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-export interface MenuFormData {
-  fechaInicio: Date | undefined;
-  fechaFin: Date | undefined;
-  comedor: string;
-  platillos: {
-    [dia: string]: {
-      desayuno: string[];
-      almuerzo: string[];
-      mediaTarde: string[];
-    };
-  };
-}
-
-const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-const mealTypes = [
-  { key: "desayuno", label: "Desayuno", icon: "☀️" },
-  { key: "almuerzo", label: "Almuerzo", icon: "🍽️" },
+const MEAL_TYPES: { key: MealKey; label: string; icon: string }[] = [
+  { key: "desayuno",   label: "Desayuno",    icon: "🟠" },
+  { key: "almuerzo",   label: "Almuerzo",    icon: "🍽️" },
   { key: "mediaTarde", label: "Media tarde", icon: "🌙" },
 ];
 
-const mockDishes = [
-  "Arroz con Pollo",
-  "Ensalada César",
-  "Bandeja Paisa",
-  "Sopa de Lentejas",
-  "Tiramisu",
-  "Jugo Natural de Naranja",
-  "Pasta Carbonara",
-  "Pescado al Horno",
-];
-
-const mockComedores = [
+const COMEDORES = [
   "Comedor Central - Ecopetrol",
   "Comedor Universidad Nacional",
   "Comedor Norte",
   "Comedor Hospital San Ignacio",
 ];
 
-export function CreateWeeklyMenuDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-}: CreateWeeklyMenuDialogProps) {
-  const [formData, setFormData] = useState<MenuFormData>({
-    fechaInicio: undefined,
-    fechaFin: undefined,
-    comedor: "",
-    platillos: daysOfWeek.reduce((acc, day) => {
-      acc[day] = { desayuno: [], almuerzo: [], mediaTarde: [] };
-      return acc;
-    }, {} as MenuFormData["platillos"]),
-  });
+interface DishEntry { id: number; nombre: string; cantidad: number; }
 
-  const [selectedCell, setSelectedCell] = useState<{
-    dia: string;
-    meal: string;
-  } | null>(null);
+type WeekPlanState = Record<string, Record<MealKey, DishEntry[]>>;
 
-  const handleAddDish = (dia: string, mealKey: string, dish: string) => {
-    setFormData({
-      ...formData,
-      platillos: {
-        ...formData.platillos,
-        [dia]: {
-          ...formData.platillos[dia],
-          [mealKey]: [...formData.platillos[dia][mealKey as keyof typeof formData.platillos[typeof dia]], dish],
-        },
-      },
-    });
-    setSelectedCell(null);
+interface CellRef { day: string; meal: MealKey; label: string; icon: string; }
+
+export function CreateWeeklyMenu() {
+  const navigate = useNavigate();
+
+  const [availableDishes, setAvailableDishes] = useState<Dish[]>([]);
+  const [nombre, setNombre] = useState("");
+  const [fechaInicio, setFechaInicio] = useState<Date | undefined>();
+  const [fechaFin, setFechaFin] = useState<Date | undefined>();
+  const [comedor, setComedor] = useState("");
+  const [weekPlan, setWeekPlan] = useState<WeekPlanState>(
+    () => emptyWeekPlan(DAYS) as WeekPlanState
+  );
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [activeCell, setActiveCell] = useState<CellRef | null>(null);
+  const [tempSelected, setTempSelected] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    loadActiveDishes()
+      .then(setAvailableDishes)
+      .catch(() => toast.error("Error al cargar platillos"));
+  }, []);
+
+  const openCellDialog = (day: string, meal: MealKey, label: string, icon: string) => {
+    setActiveCell({ day, meal, label, icon });
+    const already = weekPlan[day][meal].map((d) => d.id);
+    setTempSelected(new Set(already));
+    setDialogOpen(true);
   };
 
-  const handleRemoveDish = (dia: string, mealKey: string, index: number) => {
-    const updated = [...formData.platillos[dia][mealKey as keyof typeof formData.platillos[typeof dia]]];
-    updated.splice(index, 1);
-    setFormData({
-      ...formData,
-      platillos: {
-        ...formData.platillos,
-        [dia]: {
-          ...formData.platillos[dia],
-          [mealKey]: updated,
-        },
-      },
+  const toggleTemp = (id: number) => {
+    setTempSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.fechaInicio || !formData.fechaFin || !formData.comedor) {
-      toast.error("Por favor completa todos los campos obligatorios");
-      return;
-    }
-
-    onSubmit(formData);
-    // Reset form
-    setFormData({
-      fechaInicio: undefined,
-      fechaFin: undefined,
-      comedor: "",
-      platillos: daysOfWeek.reduce((acc, day) => {
-        acc[day] = { desayuno: [], almuerzo: [], mediaTarde: [] };
-        return acc;
-      }, {} as MenuFormData["platillos"]),
+  const confirmSelection = () => {
+    if (!activeCell) return;
+    const { day, meal } = activeCell;
+    const newEntries: DishEntry[] = Array.from(tempSelected).map((id) => {
+      const existing = weekPlan[day][meal].find((d) => d.id === id);
+      if (existing) return existing;
+      const dish = availableDishes.find((d) => d.id === id)!;
+      return { id, nombre: dish.nombre, cantidad: 1 };
     });
-    onOpenChange(false);
+    setWeekPlan((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], [meal]: newEntries },
+    }));
+    setDialogOpen(false);
+  };
+
+  const removeDish = (day: string, meal: MealKey, id: number, nombre: string) => {
+    setWeekPlan((prev) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [meal]: prev[day][meal].filter((d) => d.id !== id),
+      },
+    }));
+    toast.success(`${nombre} eliminado`);
+  };
+
+  const updateQty = (day: string, meal: MealKey, id: number, qty: number) => {
+    if (qty < 1) return;
+    setWeekPlan((prev) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [meal]: prev[day][meal].map((d) => d.id === id ? { ...d, cantidad: qty } : d),
+      },
+    }));
+  };
+
+  const handleSubmit = () => {
+    if (!nombre.trim()) { toast.error("Ingresa el nombre del menú"); return; }
+    if (!fechaInicio || !fechaFin) { toast.error("Selecciona las fechas de inicio y fin"); return; }
+    if (!comedor) { toast.error("Selecciona un comedor"); return; }
+
+    const hayPlatillos = Object.values(weekPlan).some(
+      (d) => d.desayuno.length || d.almuerzo.length || d.mediaTarde.length
+    );
+    if (!hayPlatillos) { toast.error("Agrega al menos un platillo al menú"); return; }
+
+    addMenu({
+      nombre,
+      fechaInicio: fechaInicio.toISOString(),
+      fechaFin: fechaFin.toISOString(),
+      comedor,
+      platillos: weekPlan,
+    });
+
+    toast.success("Menú semanal creado exitosamente");
+    navigate("/planeacion/menu");
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto p-0">
-        {/* Header */}
-        <DialogHeader className="border-b border-gray-200 px-6 py-4 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-600" />
-            <DialogTitle className="text-xl font-bold text-gray-900">
-              Crear Nuevo Menú Semanal
-            </DialogTitle>
+    <div className="min-h-screen bg-[#f3f4f6] p-8">
+      <div className="max-w-[1600px] mx-auto">
+
+        <Button variant="ghost" size="sm" onClick={() => navigate("/planeacion/menu")}
+          className="gap-2 mb-4 text-gray-600 hover:text-gray-900">
+          <ArrowLeft className="w-4 h-4" /> Volver a Menús
+        </Button>
+
+        <div className="flex items-start gap-3 mb-6">
+          <div className="bg-blue-100 rounded-lg p-3">
+            <Calendar className="w-6 h-6 text-blue-600" />
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-5 w-5 text-gray-400" />
-          </Button>
-        </DialogHeader>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Crear Nuevo Menú Semanal</h1>
 
-        <form onSubmit={handleSubmit}>
-          <div className="px-6 py-6 space-y-6">
-            {/* Información General */}
-            <div className="border-l-4 border-blue-500 bg-blue-50 rounded-r-lg p-4">
-              <h3 className="text-sm font-bold text-gray-900 mb-4">
-                Información General
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-sm text-gray-700">Fecha Inicio *</Label>
-                  <DatePicker
-                    date={formData.fechaInicio}
-                    onDateChange={(date) =>
-                      setFormData({ ...formData, fechaInicio: date })
-                    }
-                    placeholder="Selecciona fecha inicio"
-                    className="mt-1"
-                  />
+            <Card className="border-blue-200 shadow-sm">
+              <CardContent className="p-4">
+                <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <div className="w-1 h-4 bg-blue-600 rounded-full" />
+                  Información General
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-700 mb-1 block">Nombre del Menú *</Label>
+                    <Input value={nombre} onChange={(e) => setNombre(e.target.value)}
+                      placeholder="Ej: Comedor Central - Semana 1" className="h-9 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-700 mb-1 block">Fecha Inicio *</Label>
+                    <DatePicker date={fechaInicio} onDateChange={setFechaInicio}
+                      placeholder="Selecciona fecha inicio" className="h-9 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-700 mb-1 block">Fecha Fin *</Label>
+                    <DatePicker date={fechaFin} onDateChange={setFechaFin}
+                      placeholder="Selecciona fecha fin" className="h-9 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-gray-700 mb-1 block">Comedor *</Label>
+                    <Select value={comedor} onValueChange={setComedor}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Seleccione comedor" /></SelectTrigger>
+                      <SelectContent>
+                        {COMEDORES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-sm text-gray-700">Fecha Fin *</Label>
-                  <DatePicker
-                    date={formData.fechaFin}
-                    onDateChange={(date) =>
-                      setFormData({ ...formData, fechaFin: date })
-                    }
-                    placeholder="Selecciona fecha fin"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-700">Comedor *</Label>
-                  <Select
-                    value={formData.comedor}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, comedor: value })
-                    }
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Seleccione comedor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockComedores.map((comedor) => (
-                        <SelectItem key={comedor} value={comedor}>
-                          {comedor}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-            {/* Planificación de menú */}
-            <div className="border-l-4 border-blue-500 bg-blue-50 rounded-r-lg p-4">
-              <h3 className="text-sm font-bold text-gray-900 mb-4">
-                Planificación de menú (6 días × 3 comidas)
-              </h3>
+        <Card className="border-orange-200 shadow-sm">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <div className="w-1 h-4 bg-orange-600 rounded-full" />
+              Planificación de Platillos (6 días × 3 comidas)
+            </h3>
 
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <table className="w-full">
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-32">
+                    <tr className="bg-orange-50">
+                      <th className="border-r border-orange-200 p-2 text-left text-xs font-bold text-gray-700 w-28 sticky left-0 bg-orange-50 z-10">
                         Comida
                       </th>
-                      {daysOfWeek.map((day) => (
-                        <th
-                          key={day}
-                          className="px-4 py-3 text-center text-sm font-semibold text-gray-700"
-                        >
+                      {DAYS.map((day) => (
+                        <th key={day} className="border-r last:border-r-0 border-orange-200 p-2 text-center text-xs font-bold text-gray-700 min-w-[150px]">
                           {day}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {mealTypes.map((meal, mealIndex) => (
-                      <tr
-                        key={meal.key}
-                        className={mealIndex !== mealTypes.length - 1 ? "border-b border-gray-200" : ""}
-                      >
-                        <td className="px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50">
-                          <div className="flex items-center gap-2">
-                            <span>{meal.icon}</span>
-                            <span>{meal.label}</span>
+                    {MEAL_TYPES.map((meal, idx) => (
+                      <tr key={meal.key} className={idx % 2 === 0 ? "bg-white" : "bg-orange-50/30"}>
+                        <td className="border-r border-t border-orange-200 p-2 sticky left-0 bg-gradient-to-r from-orange-50 to-white z-10">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm">{meal.icon}</span>
+                            <span className="text-xs font-semibold text-gray-700">{meal.label}</span>
                           </div>
                         </td>
-                        {daysOfWeek.map((day) => (
-                          <td
-                            key={`${day}-${meal.key}`}
-                            className="px-2 py-2 text-center border-l border-gray-200"
-                          >
-                            <div className="min-h-[60px] flex flex-col items-center justify-center gap-1">
-                              {formData.platillos[day][meal.key as keyof typeof formData.platillos[typeof day]].length > 0 ? (
-                                <div className="w-full space-y-1">
-                                  {formData.platillos[day][meal.key as keyof typeof formData.platillos[typeof day]].map((dish: string, index: number) => (
-                                    <div
-                                      key={index}
-                                      className="flex items-center justify-between bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded group hover:bg-blue-100"
+
+                        {DAYS.map((day) => {
+                          const dishes = weekPlan[day][meal.key];
+                          return (
+                            <td key={`${day}-${meal.key}`} className="border-r last:border-r-0 border-t border-orange-200 p-1.5 align-top">
+                              <button
+                                type="button"
+                                onClick={() => openCellDialog(day, meal.key, meal.label, meal.icon)}
+                                className="w-full border border-gray-200 rounded text-xs h-7 flex items-center justify-center gap-1 hover:bg-blue-50 hover:border-blue-300 transition-colors text-gray-500 hover:text-blue-600"
+                              >
+                                <Plus className="w-3 h-3" />
+                                {dishes.length > 0 && (
+                                  <span className="font-semibold text-blue-600">{dishes.length}</span>
+                                )}
+                              </button>
+
+                              {dishes.length > 0 && (
+                                <div className="mt-1 space-y-0.5">
+                                  {dishes.map((dish) => (
+                                    <div key={dish.id}
+                                      className="bg-blue-500 text-white text-[10px] px-1.5 py-1 rounded flex items-center gap-1 hover:bg-blue-600 transition-colors"
                                     >
-                                      <span className="truncate flex-1 text-left">
-                                        {dish}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleRemoveDish(day, meal.key, index)
-                                        }
-                                        className="opacity-0 group-hover:opacity-100 ml-1 text-red-500 hover:text-red-700"
+                                      <span className="truncate flex-1" title={dish.nombre}>{dish.nombre}</span>
+                                      <input
+                                        type="number" min="1" value={dish.cantidad}
+                                        onChange={(e) => updateQty(day, meal.key, dish.id, parseInt(e.target.value) || 1)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-8 bg-blue-600 text-white text-center rounded px-0.5 text-[10px] font-semibold focus:outline-none"
+                                      />
+                                      <button type="button"
+                                        onClick={() => removeDish(day, meal.key, dish.id, dish.nombre)}
+                                        className="shrink-0 hover:bg-red-500 rounded p-0.5 transition-colors"
                                       >
-                                        <X className="w-3 h-3" />
+                                        <X className="w-2.5 h-2.5" />
                                       </button>
                                     </div>
                                   ))}
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full h-6 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                    onClick={() =>
-                                      setSelectedCell({ dia: day, meal: meal.key })
-                                    }
-                                  >
-                                    + Agregar
-                                  </Button>
                                 </div>
-                              ) : (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="w-full h-full text-gray-400 hover:text-blue-600 hover:bg-blue-50"
-                                  onClick={() =>
-                                    setSelectedCell({ dia: day, meal: meal.key })
-                                  }
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </Button>
                               )}
-                            </div>
-                          </td>
-                        ))}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              {/* Selector de platillos */}
-              {selectedCell && (
-                <div className="mt-4 p-4 bg-white border border-blue-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-gray-900">
-                      Seleccionar platillo para {selectedCell.dia} -{" "}
-                      {mealTypes.find((m) => m.key === selectedCell.meal)?.label}
-                    </h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedCell(null)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {mockDishes.map((dish) => (
-                      <Button
-                        key={dish}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="justify-start text-left"
-                        onClick={() =>
-                          handleAddDish(selectedCell.dia, selectedCell.meal, dish)
-                        }
-                      >
-                        {dish}
-                      </Button>
-                    ))}
-                  </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <Button variant="outline" onClick={() => navigate("/planeacion/menu")} className="px-6">
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} className="bg-[#e7000b] hover:bg-[#c40009] px-6">
+            Crear Menú Semanal
+          </Button>
+        </div>
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md p-0">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b bg-gradient-to-r from-blue-50 to-white">
+            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+              <span className="text-lg">{activeCell?.icon}</span>
+              {activeCell?.day} — {activeCell?.label}
+            </DialogTitle>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {tempSelected.size} platillo{tempSelected.size !== 1 ? "s" : ""} seleccionado{tempSelected.size !== 1 ? "s" : ""}
+            </p>
+          </DialogHeader>
+
+          <ScrollArea className="h-72">
+            <div className="p-3 space-y-1">
+              {availableDishes.length === 0 ? (
+                <div className="text-center py-10 text-gray-400 text-sm">
+                  <p>No hay platillos activos disponibles.</p>
+                  <p className="text-xs mt-1">Crea platillos en Gestión de Platillos.</p>
                 </div>
+              ) : (
+                availableDishes.map((dish) => {
+                  const selected = tempSelected.has(dish.id);
+                  return (
+                    <div key={dish.id}
+                      className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer border transition-colors ${
+                        selected ? "bg-blue-50 border-blue-200" : "border-transparent hover:bg-gray-50"
+                      }`}
+                      onClick={() => toggleTemp(dish.id)}
+                    >
+                      <Checkbox checked={selected} onCheckedChange={() => toggleTemp(dish.id)} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{dish.nombre}</p>
+                        <p className="text-xs text-gray-400">{dish.categoria}</p>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
-          </div>
+          </ScrollArea>
 
-          {/* Footer */}
-          <DialogFooter className="border-t border-gray-200 px-6 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+          <div className="px-4 py-3 border-t bg-gray-50 flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              className="bg-[#e7000b] hover:bg-[#c40009]"
-            >
-              Crear
+            <Button size="sm" onClick={confirmSelection} className="bg-[#e7000b] hover:bg-[#c40009]">
+              Confirmar selección
             </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

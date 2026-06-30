@@ -17,6 +17,7 @@ interface User {
   telefono: string;
   empresa: string;
   rol: string;
+  idRol: number;
   estado: boolean;
   fechaRegistro?: string;
 }

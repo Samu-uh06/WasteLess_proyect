@@ -1,14 +1,3 @@
-// ============================================================
-// AdminLogin.tsx  (MODIFICADO)
-// Ubicación: src/app/pages/AdminLogin.tsx
-//
-// CAMBIOS:
-// - Se importa ROLE_HOME desde rbac.ts
-// - handleSubmit usa el AuthUser retornado por login()
-//   para redirigir a la ruta correcta según el rol
-// - Se actualiza el subtítulo a "Acceso al sistema"
-// ============================================================
-
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
@@ -39,13 +28,9 @@ export function AdminLogin() {
 
     setCargando(true);
 
-    // Pequeño delay para simular validación (quitar en producción con API real)
-    await new Promise((r) => setTimeout(r, 600));
-
-    const usuario = login(documento.trim(), contrasena);
+    const usuario = await login(documento.trim(), contrasena);
 
     if (usuario) {
-      // Redirige según el rol: Administrador → "/", Gerente → "/produccion/pedidos", Empleado → "/mobile/home"
       navigate(ROLE_HOME[usuario.rol], { replace: true });
     } else {
       setError("Usuario o contraseña incorrectos.");

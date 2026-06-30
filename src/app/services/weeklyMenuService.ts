@@ -1,84 +1,169 @@
-// ============================================================
-// src/app/services/weeklyMenuService.ts   (ARCHIVO NUEVO)
-//
-// Servicio de persistencia del menú semanal.
-// Guarda y carga la planificación en localStorage para que
-// sobreviva recargas de página.
-// ============================================================
- 
-export interface DishWithQuantity {
-  id: number;
-  nombre: string;
-  cantidad: number;
-}
- 
-// Estructura de la planificación: { "Lunes": { desayuno: [...], almuerzo: [...], mediaTarde: [...] } }
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+const getHeaders = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${sessionStorage.getItem("wasteless_token")}`,
+});
+
 export type MealKey = "desayuno" | "almuerzo" | "mediaTarde";
- 
-export type DayPlan = Record<MealKey, DishWithQuantity[]>;
- 
-export type WeekPlan = Record<string, DayPlan>;
- 
-export interface WeeklyMenu {
-  id: string;
+
+export interface ApiDiningRoom {
+  idComedor: number;
   nombre: string;
-  fechaInicio: string;   // ISO string
-  fechaFin: string;      // ISO string
-  comedor: string;
-  platillos: WeekPlan;
-  creadoEn: string;      // ISO string
+  nombreEmpresa: string;
+  estado: string;
 }
- 
-const STORAGE_KEY = "wasteless_menus";
- 
-// ── Helpers ───────────────────────────────────────────────────
- 
-/** Devuelve todos los menús guardados */
-export function loadMenus(): WeeklyMenu[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? (JSON.parse(stored) as WeeklyMenu[]) : [];
-  } catch {
-    return [];
-  }
+
+export interface ApiDish {
+  idPlatillo: number;
+  nombre: string;
+  imagen?: string;
+  precio: number;
+  nombreCategoria?: string;
 }
- 
-/** Guarda un array completo de menús */
-export function saveMenus(menus: WeeklyMenu[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(menus));
-  } catch (e) {
-    console.error("Error al guardar menús:", e);
-  }
+
+export interface ApiMenuDetail {
+  idDetalle: number;
+  idMenu: number;
+  diaSemana: string;
+  tipoComida: string;
+  idPlatillo: number;
+  nombrePlatillo: string;
+  precio: number;
+  imagen?: string;
 }
- 
-/** Agrega un nuevo menú y lo persiste */
-export function addMenu(menu: Omit<WeeklyMenu, "id" | "creadoEn">): WeeklyMenu {
-  const menus = loadMenus();
-  const newMenu: WeeklyMenu = {
-    ...menu,
-    id: `menu_${Date.now()}`,
-    creadoEn: new Date().toISOString(),
-  };
-  saveMenus([...menus, newMenu]);
-  return newMenu;
+
+export interface ApiMenu {
+  idMenu: number;
+  codigo: string;
+  nombre: string;
+  idComedor: number;
+  nombreComedor: string;
+  fechaInicio: string;
+  fechaFin: string;
+  estado: string;
+  fechaCreacion?: string;
 }
- 
-/** Actualiza un menú existente por id */
-export function updateMenu(id: string, updates: Partial<WeeklyMenu>): void {
-  const menus = loadMenus().map((m) => (m.id === id ? { ...m, ...updates } : m));
-  saveMenus(menus);
+
+export interface ApiMenuPlanning {
+  menu: ApiMenu;
+  planning: Record<string, Record<string, ApiMenuDetail[]>>;
 }
- 
-/** Elimina un menú por id */
-export function deleteMenu(id: string): void {
-  saveMenus(loadMenus().filter((m) => m.id !== id));
+
+export async function loadMenus(): Promise<ApiMenu[]> {
+  const res = await fetch(`${BASE_URL}/api/menus`, { headers: getHeaders() });
+  const json = await res.json();
+  return json.data || [];
 }
- 
-/** Devuelve un WeekPlan vacío (todos los días y comidas en []) */
-export function emptyWeekPlan(days: string[]): WeekPlan {
-  return days.reduce<WeekPlan>((acc, day) => {
+
+export async function loadMenuById(id: number): Promise<ApiMenu> {
+  const res = await fetch(`${BASE_URL}/api/menus/${id}`, { headers: getHeaders() });
+  const json = await res.json();
+  return json.data;
+}
+
+export async function loadMenuPlanning(id: number): Promise<ApiMenuPlanning> {
+  const res = await fetch(`${BASE_URL}/api/menus/${id}/planning`, { headers: getHeaders() });
+  const json = await res.json();
+  return json.data;
+}
+
+export async function createMenu(data: {
+  codigo: string;
+  nombre: string;
+  idComedor: number;
+  fechaInicio: string;
+  fechaFin: string;
+}): Promise<ApiMenu> {
+  const res = await fetch(`${BASE_URL}/api/menus`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || "Error al crear menú");
+  return json.data;
+}
+
+export async function updateMenu(id: number, data: {
+  codigo: string;
+  nombre: string;
+  idComedor: number;
+  fechaInicio: string;
+  fechaFin: string;
+}): Promise<ApiMenu> {
+  const res = await fetch(`${BASE_URL}/api/menus/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || "Error al actualizar menú");
+  return json.data;
+}
+
+export async function deleteMenu(id: number): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/menus/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || "Error al eliminar menú");
+}
+
+export async function toggleMenuStatus(id: number, estado: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/menus/${id}/status`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify({ estado }),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || "Error al cambiar estado");
+}
+
+export async function assignDishToMenu(idMenu: number, data: {
+  diaSemana: string;
+  tipoComida: string;
+  idPlatillo: number;
+}): Promise<ApiMenuDetail> {
+  const res = await fetch(`${BASE_URL}/api/menus/${idMenu}/dishes`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || "Error al asignar platillo");
+  return json.data;
+}
+
+export async function removeDishFromMenu(idMenu: number, idDetalle: number): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/menus/${idMenu}/dishes/${idDetalle}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || "Error al eliminar platillo del menú");
+}
+
+export async function loadDiningRooms(): Promise<ApiDiningRoom[]> {
+  const res = await fetch(`${BASE_URL}/api/dining-rooms`, { headers: getHeaders() });
+  const json = await res.json();
+  return json.data || [];
+}
+
+export async function loadDishesForMenu(): Promise<ApiDish[]> {
+  const res = await fetch(`${BASE_URL}/api/dishes?limit=100`, { headers: getHeaders() });
+  const json = await res.json();
+  return json.data || [];
+}
+
+// Helpers de compatibilidad
+export function emptyWeekPlan(days: string[]): Record<string, Record<MealKey, any[]>> {
+  return days.reduce((acc, day) => {
     acc[day] = { desayuno: [], almuerzo: [], mediaTarde: [] };
     return acc;
-  }, {});
+  }, {} as Record<string, Record<MealKey, any[]>>);
 }
+
+export function addMenu() { /* deprecated - usar createMenu */ }
+export function saveMenus() { /* deprecated */ }

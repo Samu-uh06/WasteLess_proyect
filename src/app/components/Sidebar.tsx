@@ -259,7 +259,7 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 overflow-y-auto">
+      <nav className="flex-1 p-3 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
         <div className="flex flex-col gap-2">
           {itemsVisibles.map((item) => {
             const expanded = expandedItems.includes(item.label);
