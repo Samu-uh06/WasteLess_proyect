@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const authUser: AuthUser = {
         documento: data.user.idUsuario,
         nombre: data.user.email,
-        rol: data.user.idRol === 1 ? "Administrador" as UserRole : "Empleado" as UserRole,
+        rol: (data.user.nombreRol as UserRole) ?? "Empleado",
       };
 
       userRef.current = authUser;

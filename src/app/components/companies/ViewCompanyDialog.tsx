@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Building2, X, Edit, MapPin, Calendar, User, Mail, Phone, Package, TrendingUp } from "lucide-react";
+import { Building2, X, Edit, MapPin, Calendar, User, Mail, Phone, Package, } from "lucide-react";
 import { Company } from "../../pages/Companies";
 
 interface ViewCompanyDialogProps {
@@ -26,7 +26,7 @@ export function ViewCompanyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[900px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[900px] max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
         {/* Header */}
         <DialogHeader className="border-b border-gray-200 px-6 py-6">
           <div className="flex items-center justify-between">
@@ -35,7 +35,7 @@ export function ViewCompanyDialog({
                 <Building2 className="w-8 h-8 text-blue-600" />
               </div>
               <div>
-                <DialogTitle className="text-2xl font-bold text-gray-900">
+                <DialogTitle className="text-2xl font-semibold text-gray-900">
                   {company.nombre}
                 </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
@@ -70,7 +70,7 @@ export function ViewCompanyDialog({
         <div className="px-6 py-6 space-y-6">
           {/* Información General */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Información General
             </h3>
             <div className="grid grid-cols-2 gap-4">
@@ -79,7 +79,7 @@ export function ViewCompanyDialog({
                   <Package className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">NIT</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {company.nit}
                 </p>
               </div>
@@ -89,7 +89,7 @@ export function ViewCompanyDialog({
                   <MapPin className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Ciudad</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {company.ciudad}
                 </p>
               </div>
@@ -99,7 +99,7 @@ export function ViewCompanyDialog({
                   <MapPin className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Dirección</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {company.direccion || "Cra 13 # 36-24"}
                 </p>
               </div>
@@ -109,7 +109,7 @@ export function ViewCompanyDialog({
                   <Calendar className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Fecha de Registro</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {company.fechaRegistro || "2024-01-15"}
                 </p>
               </div>
@@ -118,7 +118,7 @@ export function ViewCompanyDialog({
 
           {/* Información de Contacto */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Información de Contacto
             </h3>
             <div className="grid grid-cols-3 gap-4">
@@ -127,7 +127,7 @@ export function ViewCompanyDialog({
                   <User className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Contacto</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {company.contacto}
                 </p>
               </div>
@@ -137,7 +137,7 @@ export function ViewCompanyDialog({
                   <Mail className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Email</span>
                 </div>
-                <p className="text-base font-bold text-gray-900 truncate">
+                <p className="text-base font-medium text-gray-900 truncate">
                   {company.email || "mrodriguez@ecopetrol.com.co"}
                 </p>
               </div>
@@ -147,56 +147,16 @@ export function ViewCompanyDialog({
                   <Phone className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Teléfono</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {company.telefono}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Indicadores de Cliente */}
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Indicadores de Cliente
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Package className="w-6 h-6 text-blue-600" />
-                    <span className="text-sm text-gray-600">
-                      Pedidos Realizados
-                    </span>
-                  </div>
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                </div>
-                <p className="text-3xl font-bold text-gray-900 mb-1">145</p>
-                <p className="text-xs text-gray-600">
-                  Total de pedidos generados
-                </p>
-              </div>
-
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">💵</span>
-                    <span className="text-sm text-gray-600">
-                      Facturación Total
-                    </span>
-                  </div>
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                </div>
-                <p className="text-3xl font-bold text-gray-900 mb-1">
-                  $ 45.280.000
-                </p>
-                <p className="text-xs text-gray-600">Monto total facturado</p>
-              </div>
-            </div>
-          </div>
-
           {/* Rol: Empresa Cliente */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm font-bold text-gray-900 mb-2">
+            <p className="text-sm font-semibold text-gray-900 mb-2">
               Rol: Empresa Cliente
             </p>
             <ul className="space-y-1 text-sm text-gray-700">
@@ -216,6 +176,13 @@ export function ViewCompanyDialog({
             onClick={() => onOpenChange(false)}
           >
             Cerrar
+          </Button>
+          <Button
+            className="bg-[#e7000b] hover:bg-[#c10009] text-white"
+            onClick={() => onEdit(company)}
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Editar
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -415,7 +415,7 @@ export function AccessManagement() {
 
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-[1000px] max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-[1000px] max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
           <DialogHeader className="border-b border-gray-200 px-6 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">

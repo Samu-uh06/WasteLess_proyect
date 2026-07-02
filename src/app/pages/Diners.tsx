@@ -313,7 +313,7 @@ export function Diners() {
 
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-[900px] max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-[900px] max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
           <DialogHeader className="border-b border-gray-200 px-6 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -321,7 +321,7 @@ export function Diners() {
                   <Building2 className="w-8 h-8 text-purple-600" />
                 </div>
                 <div>
-                  <DialogTitle className="text-2xl font-bold text-gray-900">{selectedDiner?.nombre}</DialogTitle>
+                  <DialogTitle className="text-2xl font-semibold text-gray-900">{selectedDiner?.nombre}</DialogTitle>
                   <p className="text-sm text-gray-600 mt-1">{selectedDiner?.empresa}</p>
                 </div>
               </div>
@@ -331,15 +331,15 @@ export function Diners() {
           {selectedDiner && (
             <div className="px-6 py-6 space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-2">Información General</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Información General</h3>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="bg-gray-50 rounded p-2">
                     <p className="text-xs text-gray-500">Nombre</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">{selectedDiner.nombre}</p>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5">{selectedDiner.nombre}</p>
                   </div>
                   <div className="bg-gray-50 rounded p-2">
                     <p className="text-xs text-gray-500">Empresa</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">{selectedDiner.empresa}</p>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5">{selectedDiner.empresa}</p>
                   </div>
                   <div className="bg-gray-50 rounded p-2">
                     <p className="text-xs text-gray-500">Estado</p>
@@ -348,47 +348,47 @@ export function Diners() {
                 </div>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-2">Ubicación y Horario</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Ubicación y Horario</h3>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-gray-50 rounded p-2">
                     <p className="text-xs text-gray-500">Dirección</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">{selectedDiner.direccion}</p>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5">{selectedDiner.direccion}</p>
                   </div>
                   <div className="bg-gray-50 rounded p-2">
                     <p className="text-xs text-gray-500">Horario</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">{selectedDiner.horario}</p>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5">{selectedDiner.horario}</p>
                   </div>
                 </div>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-2">Capacidad y Empleados</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Capacidad y Empleados</h3>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-blue-50 border border-blue-200 rounded p-2">
                     <p className="text-xs text-blue-600">Capacidad</p>
-                    <p className="text-base font-bold text-blue-900 mt-0.5">{selectedDiner.capacidad} personas</p>
+                    <p className="text-base font-medium text-blue-900 mt-0.5">{selectedDiner.capacidad} personas</p>
                   </div>
                   <div className="bg-green-50 border border-green-200 rounded p-2">
                     <p className="text-xs text-green-600">Total Empleados</p>
-                    <p className="text-base font-bold text-green-900 mt-0.5">{selectedDiner.empleados} empleados</p>
+                    <p className="text-base font-medium text-green-900 mt-0.5">{selectedDiner.empleados} empleados</p>
                   </div>
                 </div>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-2">Información de Contacto</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Información de Contacto</h3>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-gray-50 rounded p-2">
                     <p className="text-xs text-gray-500">Encargado</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">{selectedDiner.encargado}</p>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5">{selectedDiner.encargado}</p>
                   </div>
                   <div className="bg-gray-50 rounded p-2">
                     <p className="text-xs text-gray-500">Teléfono</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">{selectedDiner.telefono}</p>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5">{selectedDiner.telefono}</p>
                   </div>
                 </div>
               </div>
               {selectedDiner.descripcion && (
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-2">Descripción</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Descripción</h3>
                   <div className="bg-gray-50 rounded p-3">
                     <p className="text-sm text-gray-700">{selectedDiner.descripcion}</p>
                   </div>

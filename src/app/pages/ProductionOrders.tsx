@@ -159,7 +159,7 @@ export function ProductionOrders() {
 
       {/* Modal detalle */}
       <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-        <DialogContent className="max-w-[500px] p-0">
+        <DialogContent className="max-w-[500px] p-0" showCloseButton={false}>
           <DialogHeader className="border-b border-gray-200 px-6 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">

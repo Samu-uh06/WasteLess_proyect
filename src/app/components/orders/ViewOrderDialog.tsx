@@ -41,7 +41,7 @@ export function ViewOrderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
         <DialogHeader className="border-b border-gray-200 px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -49,7 +49,7 @@ export function ViewOrderDialog({
                 <Package className="w-8 h-8 text-red-600" />
               </div>
               <div>
-                <DialogTitle className="text-2xl font-bold text-gray-900">
+                <DialogTitle className="text-2xl font-semibold text-gray-900">
                   {order.codigo}
                 </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
@@ -73,27 +73,27 @@ export function ViewOrderDialog({
         <div className="px-6 py-6 space-y-4">
           {/* Información del Proveedor */}
           <div>
-            <h3 className="text-sm font-bold text-gray-900 mb-2">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">
               Información del Proveedor
             </h3>
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-gray-50 rounded p-2">
                 <p className="text-xs text-gray-500">Proveedor</p>
-                <p className="text-sm font-bold text-gray-900 mt-0.5">
+                <p className="text-sm font-medium text-gray-900 mt-0.5">
                   {order.proveedor}
                 </p>
               </div>
 
               <div className="bg-gray-50 rounded p-2">
                 <p className="text-xs text-gray-500">Contacto</p>
-                <p className="text-sm font-bold text-gray-900 mt-0.5">
+                <p className="text-sm font-medium text-gray-900 mt-0.5">
                   {order.contacto || "María González"}
                 </p>
               </div>
 
               <div className="bg-gray-50 rounded p-2">
                 <p className="text-xs text-gray-500">Dirección</p>
-                <p className="text-sm font-bold text-gray-900 mt-0.5">
+                <p className="text-sm font-medium text-gray-900 mt-0.5">
                   {order.direccion || "Calle 45 #23-12, Bogotá"}
                 </p>
               </div>
@@ -102,27 +102,27 @@ export function ViewOrderDialog({
 
           {/* Información del Producto */}
           <div>
-            <h3 className="text-sm font-bold text-gray-900 mb-2">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">
               Información del Producto
             </h3>
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-gray-50 rounded p-2">
                 <p className="text-xs text-gray-500">Producto</p>
-                <p className="text-sm font-bold text-gray-900 mt-0.5">
+                <p className="text-sm font-medium text-gray-900 mt-0.5">
                   {order.producto}
                 </p>
               </div>
 
               <div className="bg-gray-50 rounded p-2">
                 <p className="text-xs text-gray-500">Cantidad</p>
-                <p className="text-sm font-bold text-gray-900 mt-0.5">
+                <p className="text-sm font-medium text-gray-900 mt-0.5">
                   {order.cantidad}
                 </p>
               </div>
 
               <div className="bg-gray-50 rounded p-2">
                 <p className="text-xs text-gray-500">Fecha Creación</p>
-                <p className="text-sm font-bold text-gray-900 mt-0.5">
+                <p className="text-sm font-medium text-gray-900 mt-0.5">
                   {order.fechaCreacion}
                 </p>
               </div>
@@ -131,7 +131,7 @@ export function ViewOrderDialog({
 
           {/* Descripción */}
           <div>
-            <h3 className="text-sm font-bold text-gray-900 mb-2">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">
               Descripción del Producto
             </h3>
             <div className="bg-gray-50 rounded p-3">
@@ -143,12 +143,12 @@ export function ViewOrderDialog({
 
           {/* Información de Entrega */}
           <div>
-            <h3 className="text-sm font-bold text-gray-900 mb-2">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">
               Información de Entrega
             </h3>
             <div className="bg-blue-50 border border-blue-200 rounded p-3">
               <p className="text-xs text-blue-600">Restaurante Destino</p>
-              <p className="text-sm font-bold text-blue-900 mt-0.5">
+              <p className="text-sm font-medium text-blue-900 mt-0.5">
                 {order.restaurante}
               </p>
             </div>
@@ -171,7 +171,7 @@ export function ViewOrderDialog({
                 "text-green-600"
               }`} />
               <div>
-                <h4 className="text-xs font-bold text-gray-900">
+                <h4 className="text-xs font-semibold text-gray-900">
                   Estado Actual: {order.estado}
                 </h4>
                 <p className="text-xs text-gray-700 mt-0.5">

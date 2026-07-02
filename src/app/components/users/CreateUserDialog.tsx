@@ -75,7 +75,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit }: CreateUserDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[600px] max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
         <DialogHeader className="border-b border-gray-200 px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

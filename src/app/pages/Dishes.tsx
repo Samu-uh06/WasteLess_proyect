@@ -296,7 +296,7 @@ export function Dishes() {
 
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-[700px] max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-[700px] max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
           <DialogHeader className="border-b border-gray-200 px-6 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -304,7 +304,7 @@ export function Dishes() {
                   <>
                     <img src={selectedDish.imagen || "/placeholder-dish.png"} alt={selectedDish.nombre} className="w-20 h-20 rounded-lg object-cover" onError={(e) => { e.currentTarget.src = "/placeholder-dish.png"; }} />
                     <div>
-                      <DialogTitle className="text-2xl font-bold text-gray-900">{selectedDish.nombre}</DialogTitle>
+                      <DialogTitle className="text-2xl font-semibold text-gray-900">{selectedDish.nombre}</DialogTitle>
                       <span className="text-xs font-medium px-3 py-1 rounded-full bg-blue-100 text-blue-800 inline-block mt-1">{selectedDish.categoria}</span>
                       {selectedDish.bebida && (<span className="ml-2 text-xs font-medium px-3 py-1 rounded-full bg-purple-100 text-purple-800 inline-block mt-1">Incluye bebida</span>)}
                     </div>
@@ -317,36 +317,36 @@ export function Dishes() {
           {selectedDish && (
             <div className="px-6 py-6 space-y-6">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Descripción</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Descripción</h3>
                 <p className="text-base text-gray-700">{selectedDish.descripcion}</p>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Información General</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Información General</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-gray-50 rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Precio</p>
-                    <p className="text-xl font-bold text-gray-900">${selectedDish.precio.toLocaleString()} COP</p>
+                    <p className="text-xl font-medium text-gray-900">${selectedDish.precio.toLocaleString()} COP</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Calorías</p>
-                    <p className="text-xl font-bold text-gray-900">{selectedDish.calorias} kcal</p>
+                    <p className="text-xl font-medium text-gray-900">{selectedDish.calorias} kcal</p>
                   </div>
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Información Nutricional</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Nutricional</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Proteínas</p>
-                    <p className="text-xl font-bold text-blue-900">{selectedDish.proteinas || 0}g</p>
+                    <p className="text-xl font-medium text-blue-900">{selectedDish.proteinas || 0}g</p>
                   </div>
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Carbohidratos</p>
-                    <p className="text-xl font-bold text-green-900">{selectedDish.carbohidratos || 0}g</p>
+                    <p className="text-xl font-medium text-green-900">{selectedDish.carbohidratos || 0}g</p>
                   </div>
                   <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Grasas</p>
-                    <p className="text-xl font-bold text-orange-900">{selectedDish.grasas || 0}g</p>
+                    <p className="text-xl font-medium text-orange-900">{selectedDish.grasas || 0}g</p>
                   </div>
                 </div>
               </div>

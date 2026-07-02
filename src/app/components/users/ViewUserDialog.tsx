@@ -39,7 +39,7 @@ export function ViewUserDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[700px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[700px] max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
         <DialogHeader className="border-b border-gray-200 px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -47,7 +47,7 @@ export function ViewUserDialog({
                 <UserIcon className="w-8 h-8 text-red-600" />
               </div>
               <div>
-                <DialogTitle className="text-2xl font-bold text-gray-900">
+                <DialogTitle className="text-2xl font-semibold text-gray-900">
                   {user.nombre}
                 </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
@@ -80,7 +80,7 @@ export function ViewUserDialog({
         <div className="px-6 py-6 space-y-6">
           {/* Información Personal */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Información Personal
             </h3>
             <div className="grid grid-cols-2 gap-4">
@@ -89,7 +89,7 @@ export function ViewUserDialog({
                   <IdCard className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Tipo de Documento</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {user.tipoDocumento}
                 </p>
               </div>
@@ -99,7 +99,7 @@ export function ViewUserDialog({
                   <IdCard className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Documento</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {user.documento}
                 </p>
               </div>
@@ -109,7 +109,7 @@ export function ViewUserDialog({
                   <UserIcon className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Nombre Completo</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {user.nombre}
                 </p>
               </div>
@@ -118,7 +118,7 @@ export function ViewUserDialog({
 
           {/* Información de Contacto */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Información de Contacto
             </h3>
             <div className="grid grid-cols-2 gap-4">
@@ -127,7 +127,7 @@ export function ViewUserDialog({
                   <Mail className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Correo Electrónico</span>
                 </div>
-                <p className="text-base font-bold text-gray-900 truncate">
+                <p className="text-base font-medium text-gray-900 truncate">
                   {user.email}
                 </p>
               </div>
@@ -137,7 +137,7 @@ export function ViewUserDialog({
                   <Phone className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Teléfono</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {user.telefono}
                 </p>
               </div>
@@ -146,7 +146,7 @@ export function ViewUserDialog({
 
           {/* Información Laboral */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Información Laboral
             </h3>
             <div className="grid grid-cols-2 gap-4">
@@ -155,7 +155,7 @@ export function ViewUserDialog({
                   <Building2 className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Empresa</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {user.empresa}
                 </p>
               </div>
@@ -165,7 +165,7 @@ export function ViewUserDialog({
                   <Shield className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Rol</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {user.rol}
                 </p>
               </div>
@@ -175,7 +175,7 @@ export function ViewUserDialog({
                   <Calendar className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-600">Fecha de Registro</span>
                 </div>
-                <p className="text-base font-bold text-gray-900">
+                <p className="text-base font-medium text-gray-900">
                   {user.fechaRegistro || "2024-01-15"}
                 </p>
               </div>

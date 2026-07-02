@@ -86,7 +86,7 @@ export function CompanyDinersDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[900px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[900px] max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
         {/* Header */}
         <DialogHeader className="border-b border-gray-200 px-6 py-6">
           <div className="flex items-center justify-between">
@@ -95,7 +95,7 @@ export function CompanyDinersDialog({
                 <UtensilsCrossed className="w-6 h-6 text-orange-600" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-bold text-gray-900">
+                <DialogTitle className="text-xl font-semibold text-gray-900">
                   Comedores de {company.nombre}
                 </DialogTitle>
                 <p className="text-sm text-gray-600">
@@ -128,7 +128,7 @@ export function CompanyDinersDialog({
           {/* Add Comedor Form */}
           {showAddForm && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
-              <h4 className="font-bold text-gray-900">Nuevo Comedor</h4>
+              <h4 className="font-semibold text-gray-900">Nuevo Comedor</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="nombre" className="text-sm text-gray-700">
